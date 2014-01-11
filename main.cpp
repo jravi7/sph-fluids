@@ -13,11 +13,14 @@
 #include "ParticleSystem.h"
 #include "TrackBall.h"
 #include "pipeline.h"
+#include "cube.h"
 
 Shader shader_obj;
 Pipeline* p; 
 Camera cam;
 TrackBall* trackBall;
+
+Cube* cube;
 
 int gwidth = 800;
 int gheight = 600; 
@@ -54,59 +57,12 @@ glm::vec3 *partPos;
 ParticleSystem ps;
 
 glm::vec3 globalPos;
-float gRotateX = 0;
-float gRotateY = 0;
-float gRotateZ = 0;
+
 
 
 
 bool isMouseDown = false;
 
-const float cubeVerts[] = {
-	  // front
-    -10.0, -10.0,  10.0, 
-     10.0, -10.0,  10.0, 
-     10.0,  10.0,  10.0, 
-    -10.0,  10.0,  10.0, 
-    // back
-    -10.0, -10.0, -10.0, 
-     10.0, -10.0, -10.0, 
-     10.0,  10.0, -10.0, 
-    -10.0,  10.0, -10.0, 
-};
-const GLushort cubeIndices[] = {
-	//front
-	0, 1, 2, 
-	2, 3, 0, 
-	//top
-	3, 2, 6, 
-	6, 7, 3, 
-	//back
-	7, 6, 5, 
-	5, 4, 7, 
-	//left
-	4, 0, 3,
-	3, 7, 4, 
-	//right
-	1, 5, 6, 
-	6, 2, 1,
-	//bottom
-	4, 5, 1, 
-	1, 0, 4,
-};
-
-GLfloat cube_colors[] = {
-    // front colors
-    1.0, 0.0, 0.0, 1.0f,
-    0.0, 1.0, 0.0, 1.0f,
-    0.0, 0.0, 1.0, 1.0f,
-    1.0, 1.0, 1.0, 1.0f,
-    // back colors
-    1.0, 0.0, 0.0, 1.0f,
-    0.0, 1.0, 0.0, 1.0f,
-    0.0, 0.0, 1.0, 1.0f,
-    0.0, 0.0, 0.0, 1.0f,
-  };
 
 
 void InitializeProgram()
@@ -140,38 +96,18 @@ void initCamera(){
 	printf("%d", cam.mMouseY);
 	glutWarpPointer(cam.mMouseX, cam.mMouseY);
 }
-void InitializeBuffers()
-{
-//Vertex Buffers for the cube
-	glGenBuffers(1, &vertexBuffers);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	//VBO for the color
-	glGenBuffers(1, &colorBuffers);
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffers);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_colors), cube_colors, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	//EBO for the indices
-	glGenBuffers(1, &indexBuffers);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-}
 
 void initOpengl()
 {
 	lastTime = glutGet(GLUT_ELAPSED_TIME);
 	glEnable(GL_DEPTH_TEST);
 	InitializeProgram();
-	InitializeBuffers();
 	initCamera();
 	getShaderVarLoc();
 	p = new Pipeline(projection_loc, cam.matrix(), glm::vec3(0, 0, 0));
 	trackBall = new TrackBall(gwidth, gheight);
+	cube = new Cube(glm::vec3(10, 10, 10), glm::vec3(0, 0, 0));
 	glPointSize(3.f);
 		
 }
@@ -219,14 +155,8 @@ void display()
 	glEnableVertexAttribArray(color_loc);
 	
 	
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers);
-	glVertexAttribPointer(position_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffers);
-	glVertexAttribPointer(color_loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers);
-	//glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+	cube->render(position_loc, color_loc);
 	glutWireSphere(10, 30, 30);
 	
 	/*p->MoveTo(glm::vec3(25, 0, 0));

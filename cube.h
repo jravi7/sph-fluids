@@ -8,21 +8,24 @@
 class Cube
 {
 public:
-	Cube(unsigned int w, unsigned int h, unsigned int d, glm::vec3 p);
-	void computeVerts();
-	void computeIndices();
-	void initBuffers(); 
+	Cube(glm::vec3 d, glm::vec3 p);
+	void render(int pos_loc, int color_loc);
 	~Cube(void);
 private:
+	void computeVerts();
+	void computeIndices();
+	void initColors();
+	void initBuffers(); 
+
 	glm::vec3 pos; 
-	GLuint width; 
-	GLuint height; 
-	GLuint depth; 
+	glm::vec3 dim;			//dimensions of cube x->width , y-> depth
 	GLfloat verts[24];
 	GLushort indices[36];
+	GLfloat colors[32];
 
 	GLuint VB;			//Vertex buffers
 	GLuint IB;			//Element Buffers or Indices buffer
+	GLuint CB;			//Color Buffers
 
 };
 
