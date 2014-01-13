@@ -14,6 +14,7 @@
 #include "TrackBall.h"
 #include "pipeline.h"
 #include "cube.h"
+#include "image.h"
 
 Shader shader_obj;
 Pipeline* p; 
@@ -51,6 +52,8 @@ GLuint vertexBuffers;
 GLuint indexBuffers;
 GLuint colorBuffers;
 GLuint particleBuffers;
+GLuint textureId; 
+GLuint texcoord; 
 
 glm::vec3 *partPos; 
 
@@ -59,7 +62,28 @@ ParticleSystem ps;
 glm::vec3 globalPos;
 
 
+const float cubeVerts[] = {
+	  // front
+    -5.0, -5.0,  5.0, 
+     5.0, -5.0,  5.0, 
+     5.0,  5.0,  5.0, 
+    -5.0,  5.0,  5.0, 
+};
 
+Image* imgTex;
+ GLushort cube_elements[] = {
+    // front
+    0, 1, 2,
+    2, 3, 0,
+ }; 
+
+ GLfloat cube_texcoords[] = {
+    // front
+    0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0,
+    0.0, 1.0,
+  };
 
 bool isMouseDown = false;
 
@@ -77,10 +101,11 @@ void getShaderVarLoc()
 {
 	position_loc = shader_obj.getAttributeLocation("position");
 	color_loc = shader_obj.getAttributeLocation("color");
+	texcoord_loc = shader_obj.getAttributeLocation("texcoord");
 	projection_loc = shader_obj.getUniformLoc("projection");
 	texture_loc = shader_obj.getUniformLoc("gtexture");
-	texcoord_loc = shader_obj.getUniformLoc("texcoord0");
-	normal_loc = shader_obj.getUniformLoc("normal0");
+	
+	normal_loc = shader_obj.getUniformLoc("normal");
 }
 
 void initCamera(){
@@ -97,6 +122,42 @@ void initCamera(){
 	glutWarpPointer(cam.mMouseX, cam.mMouseY);
 }
 
+void initBuffers()
+{
+	glGenBuffers(1, &vertexBuffers);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	//EBO for the indices
+	glGenBuffers(1, &indexBuffers);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_elements), cube_elements, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	//generate texture coords buffers
+	glGenBuffers(1, &texcoord);
+	glBindBuffer(GL_ARRAY_BUFFER, texcoord);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_texcoords), cube_texcoords, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	//Generate texture object
+	imgTex = new Image("textures/blue.png");
+	glGenTextures(1, &textureId);
+	glBindTexture(GL_TEXTURE_2D, textureId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, // target
+	       0,  // level, 0 = base, no minimap,
+	       GL_RGB, // internalformat
+	       imgTex->width(),  // width
+	       imgTex->height(),  // height
+	       0,  // border, always 0 in OpenGL ES
+	       GL_RGB,  // format
+	       GL_UNSIGNED_BYTE, // type
+		   imgTex->data());
+	
+}
+
 
 void initOpengl()
 {
@@ -105,10 +166,10 @@ void initOpengl()
 	InitializeProgram();
 	initCamera();
 	getShaderVarLoc();
+	initBuffers();
 	p = new Pipeline(projection_loc, cam.matrix(), glm::vec3(0, 0, 0));
 	trackBall = new TrackBall(gwidth, gheight);
 	cube = new Cube(glm::vec3(10, 10, 10), glm::vec3(0, 0, 0));
-	glPointSize(3.f);
 		
 }
 
@@ -153,11 +214,24 @@ void display()
 	//Enable the position location in the shader
 	glEnableVertexAttribArray(position_loc);
 	glEnableVertexAttribArray(color_loc);
+	glEnableVertexAttribArray(texcoord_loc);
 	
 	
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureId);
+	glUniform1i(texture_loc, /*GL_TEXTURE*/0);
+
+	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers);
+	glVertexAttribPointer(position_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, texcoord);
+	glVertexAttribPointer(texcoord_loc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers);
+	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
 	
-	cube->render(position_loc, color_loc);
-	glutWireSphere(10, 30, 30);
+	cube->render(position_loc, color_loc, texcoord_loc, texture_loc);
+	//glutWireSphere(10, 30, 30);
 	
 	/*p->MoveTo(glm::vec3(25, 0, 0));
 	p->Rotate(angle, glm::vec3(0, 0, 1));

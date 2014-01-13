@@ -4,16 +4,18 @@
 
 #include <glm\glm.hpp>
 #include <GL\glew.h>
+#include "texture.h"
 
 class Cube
 {
 public:
 	Cube(glm::vec3 d, glm::vec3 p);
-	void render(int pos_loc, int color_loc);
+	void render(int pos_loc, int color_loc, int tex_loc, int sample);
 	~Cube(void);
 private:
 	void computeVerts();
 	void computeIndices();
+	void computeTexCoords();
 	void initColors();
 	void initBuffers(); 
 
@@ -22,10 +24,14 @@ private:
 	GLfloat verts[24];
 	GLushort indices[36];
 	GLfloat colors[32];
+	GLfloat texcoords[48];
 
 	GLuint VB;			//Vertex buffers
 	GLuint IB;			//Element Buffers or Indices buffer
 	GLuint CB;			//Color Buffers
+	GLuint TB;			//Texture Coordinate Buffers
+
+	Texture* tex;
 
 };
 

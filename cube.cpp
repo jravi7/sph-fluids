@@ -5,8 +5,10 @@ Cube::Cube(glm::vec3 d, glm::vec3 p)
 {
 	dim = d; 
 	pos = p; 
+	tex = new Texture(GL_TEXTURE_2D, "textures/wood.jpg");
 	computeVerts();
 	computeIndices();
+	computeTexCoords();
 	initColors();
 	initBuffers();
 }
@@ -22,6 +24,12 @@ void Cube::initBuffers()
 	glGenBuffers(1, &CB);
 	glBindBuffer(GL_ARRAY_BUFFER, CB);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	//Buffers for Texture Coordinates
+	glGenBuffers(1, &TB);
+	glBindBuffer(GL_ARRAY_BUFFER, TB);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(texcoords), colors, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	//EBO for the indices
@@ -72,6 +80,26 @@ void Cube::initColors()
 	colors[29]=0.0;
 	colors[30]=0.0;
 	colors[31]=1.0;
+}
+
+void Cube::computeTexCoords()
+{
+	texcoords[0] = 0.0f; 
+	texcoords[1] = 0.0f;
+
+	texcoords[2] = 1.0f; 
+	texcoords[3] = 0.0f; 
+
+	texcoords[4] = 1.0f; 
+	texcoords[5] = 1.0f;
+
+	texcoords[6] = 0.0f; 
+	texcoords[7] = 1.0f; 
+
+	for(unsigned int i = 1; i<6; i++)
+	{
+		memcpy(&texcoords[i*2*4], &texcoords[0], 2*4*sizeof(GLfloat)); 
+	}
 }
 
 void Cube::computeVerts()
@@ -155,13 +183,18 @@ void Cube::computeIndices()
 	indices[35]  = 4;
 }
 
-void Cube::render(int pos_loc, int color_loc)
+void Cube::render(int pos_loc, int color_loc, int tex_loc, int sample)
 {
+	tex->activate(sample, GL_TEXTURE0, 0);
+
 	glBindBuffer(GL_ARRAY_BUFFER, VB);
 	glVertexAttribPointer(pos_loc, 3, GL_FLOAT,GL_FALSE, 0, 0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, CB);
-	glVertexAttribPointer(color_loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	//glBindBuffer(GL_ARRAY_BUFFER, CB);
+	//glVertexAttribPointer(color_loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, TB); 
+	glVertexAttribPointer(tex_loc, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);			//render triangles

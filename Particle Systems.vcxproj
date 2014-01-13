@@ -19,7 +19,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -78,21 +78,25 @@
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="cube.cpp" />
+    <ClCompile Include="image.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="particlesystem.cpp" />
     <ClCompile Include="pipeline.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="texture.cpp" />
     <ClCompile Include="trackball.cpp" />
     <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="cube.h" />
+    <ClInclude Include="image.h" />
     <ClInclude Include="particle.h" />
     <ClInclude Include="particlesystem.h" />
     <ClInclude Include="pipeline.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="texture.h" />
     <ClInclude Include="trackball.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
