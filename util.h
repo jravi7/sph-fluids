@@ -8,7 +8,7 @@
 
 inline float randomize(float min, float max)
 {
-	return float(((std::rand() / float(RAND_MAX)) * max) - min);
+	return float(((std::rand() / float(RAND_MAX)) * max*2) - min);
 }
 
 inline glm::vec3 randVec(glm::vec3 min, glm::vec3 max)

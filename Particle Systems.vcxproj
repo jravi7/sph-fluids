@@ -80,6 +80,7 @@
     <ClCompile Include="cube.cpp" />
     <ClCompile Include="image.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="mesh.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="particlesystem.cpp" />
     <ClCompile Include="pipeline.cpp" />
@@ -92,6 +93,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="cube.h" />
     <ClInclude Include="image.h" />
+    <ClInclude Include="mesh.h" />
     <ClInclude Include="particle.h" />
     <ClInclude Include="particlesystem.h" />
     <ClInclude Include="pipeline.h" />

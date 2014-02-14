@@ -10,6 +10,7 @@ ParticleSystem::ParticleSystem(void)
 	pnum = 50;
 	lastTime = 0;
 
+
 }
 
 
@@ -31,9 +32,9 @@ void ParticleSystem::setBoundary(glm::vec3 bmin, glm::vec3 bmax)
 
 
 
-void ParticleSystem::simulate(float dt, glm::vec3 center, glm::vec3 aux)
+void ParticleSystem::simulate(float dt, glm::vec3 center, bool isChaos)
 {
-	gravitate(center, aux);
+	gravitate(center, isChaos);
 	//repel();
 	for(int i=0; i< pnum;i++)
 	{
@@ -63,6 +64,7 @@ void ParticleSystem::simulate(float dt, glm::vec3 center, glm::vec3 aux)
 
 void ParticleSystem::initParticles()
 {
+	
 	//Randomize particle positions
 	//initialize velocity and randomize acceleration for each particle
 	if(isRandPos)
@@ -90,7 +92,7 @@ void ParticleSystem::initParticles()
 		}
 	}
 	
-
+	
 }
 
 
@@ -109,13 +111,34 @@ void ParticleSystem::setRandPos(bool val)
 	isRandPos = val;
 }
 
+void ParticleSystem::render(int pos_loc, int color_loc)
+{	
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, pnum*sizeof(glm::vec3), mPos, GL_STREAM_DRAW);
+	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	
+	glGenBuffers(1, &cbo);
+	glBindBuffer(GL_ARRAY_BUFFER, cbo);
+	glBufferData(GL_ARRAY_BUFFER, pnum*sizeof(glm::vec3), mPos, GL_STREAM_DRAW);
+	glVertexAttribPointer(color_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+
+	glDrawArrays(GL_POINTS, 0, (GLsizei)pnum);
+
+	
+}
+
 bool ParticleSystem::RandPos()
 {
 	return isRandPos; 
 }
 
 
-void ParticleSystem::gravitate(glm::vec3 center, glm::vec3 aux)
+void ParticleSystem::gravitate(glm::vec3 center,bool isChaos)
 {
 	float M = 100;   /// ----> Mass of the mouse pointer in kg
 	for(int i = 0; i<pnum; i++)
@@ -132,7 +155,10 @@ void ParticleSystem::gravitate(glm::vec3 center, glm::vec3 aux)
 
 		newAcc =  glm::normalize(temp);
 		
-		*(mAcc+i) = newAcc;
+		if(isChaos)
+			*(mAcc+i) = newAcc*f/m;
+		else
+			*(mAcc+i) = newAcc;
 	}
 }
 

@@ -12,11 +12,12 @@ class Texture
 {
 public:
 	Texture(GLenum TextureTarget, string filename);
+	bool load();
 	void activate(int location, GLenum textureUnit, GLushort unit);
 	~Texture(void);
 private:
 	void init();
-	void load();
+	
 	GLenum mTarget;
 	GLuint mTextureId;
 	Image* mImage;

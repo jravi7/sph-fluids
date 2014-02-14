@@ -3,23 +3,22 @@
 #define IMAGE_H
 #include <iostream>
 #include <IL\il.h>
+#include <SOIL.h>
 
 
 class Image
 {
 private:
-	ILuint mImgID; 
-	ILubyte* mData; 
-	unsigned int mwidth; 
-	unsigned int mheight; 
+	unsigned char* image;
+	int mwidth; 
+	int mheight; 
+	void load(std::string filename); 
 public:
 
 	Image(std::string filename);
 	int width();
 	int height();
-	void init();
-	ILboolean load(std::string filename); 
-	ILubyte* data();
+	unsigned char* data();
 	~Image(void);
 };
 

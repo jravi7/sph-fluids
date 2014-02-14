@@ -17,14 +17,12 @@ void Texture::init()
 	mImage = new Image(mFilename);
 }
 
-void Texture::load()
+bool Texture::load()
 {
 	glTexImage2D(mTarget, 0, GL_RGB, mImage->width(), mImage->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, mImage->data());
-	/*glTexParameterf(mTarget, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(mTarget, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(mTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(mTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(mTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	return true;			//change this later
 }
 
 void Texture::activate(int location, GLenum textureUnit, GLushort unit)

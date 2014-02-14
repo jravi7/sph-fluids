@@ -10,22 +10,28 @@
 #include <glm/gtx/transform.hpp>
 #include <math.h>
 #include "Camera.h"
-#include "ParticleSystem.h"
 #include "TrackBall.h"
 #include "pipeline.h"
 #include "cube.h"
 #include "image.h"
+#include "mesh.h"
+#include "particlesystem.h"
 
 Shader shader_obj;
 Pipeline* p; 
 Camera cam;
 TrackBall* trackBall;
+ParticleSystem* ps;
 
-Cube* cube;
+Mesh* obj3d;
+
 
 int gwidth = 800;
 int gheight = 600; 
-float angle;
+//Keyboard variables
+bool keyStates[256];
+
+
 //Shader var locations
 int position_loc = -1;			// Initialize location to -1 
 int color_loc= -1;			
@@ -33,19 +39,10 @@ int projection_loc = -1;
 int texture_loc = -1;
 int texcoord_loc = -1;
 int normal_loc = -1;
+
 //Transformation Matrices
-  glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.0, 0.0));
-  glm::mat4 rot = glm::rotate(model, 45.f, glm::vec3(1, 0, 0));
-  
-  
-
-
-  //Keyboard variables
-  bool keyStates[256];
-
-  
-  int lastTime = 0;
-
+glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.0, 0.0));
+glm::mat4 rot = glm::rotate(model, 45.f, glm::vec3(1, 0, 0));
 
 //Buffers
 GLuint vertexBuffers;
@@ -54,38 +51,9 @@ GLuint colorBuffers;
 GLuint particleBuffers;
 GLuint textureId; 
 GLuint texcoord; 
-
 glm::vec3 *partPos; 
 
-ParticleSystem ps;
 
-glm::vec3 globalPos;
-
-
-const float cubeVerts[] = {
-	  // front
-    -5.0, -5.0,  5.0, 
-     5.0, -5.0,  5.0, 
-     5.0,  5.0,  5.0, 
-    -5.0,  5.0,  5.0, 
-};
-
-Image* imgTex;
- GLushort cube_elements[] = {
-    // front
-    0, 1, 2,
-    2, 3, 0,
- }; 
-
- GLfloat cube_texcoords[] = {
-    // front
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0,
-  };
-
-bool isMouseDown = false;
 
 
 
@@ -104,7 +72,6 @@ void getShaderVarLoc()
 	texcoord_loc = shader_obj.getAttributeLocation("texcoord");
 	projection_loc = shader_obj.getUniformLoc("projection");
 	texture_loc = shader_obj.getUniformLoc("gtexture");
-	
 	normal_loc = shader_obj.getUniformLoc("normal");
 }
 
@@ -122,65 +89,34 @@ void initCamera(){
 	glutWarpPointer(cam.mMouseX, cam.mMouseY);
 }
 
-void initBuffers()
+void initParticles()
 {
-	glGenBuffers(1, &vertexBuffers);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	//EBO for the indices
-	glGenBuffers(1, &indexBuffers);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_elements), cube_elements, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	//generate texture coords buffers
-	glGenBuffers(1, &texcoord);
-	glBindBuffer(GL_ARRAY_BUFFER, texcoord);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_texcoords), cube_texcoords, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	//Generate texture object
-	imgTex = new Image("textures/blue.png");
-	glGenTextures(1, &textureId);
-	glBindTexture(GL_TEXTURE_2D, textureId);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, // target
-	       0,  // level, 0 = base, no minimap,
-	       GL_RGB, // internalformat
-	       imgTex->width(),  // width
-	       imgTex->height(),  // height
-	       0,  // border, always 0 in OpenGL ES
-	       GL_RGB,  // format
-	       GL_UNSIGNED_BYTE, // type
-		   imgTex->data());
-	
+	glPointSize(3.0f);
+	ps = new ParticleSystem();
+	ps->setBoundary(glm::vec3(-20, -20, -20), glm::vec3(20, 20, 20));
+	ps->setRandPos(true);
+	ps->setPnum(1000);
+	ps->initMemory();	
+	ps->initParticles();
 }
 
 
 void initOpengl()
 {
-	lastTime = glutGet(GLUT_ELAPSED_TIME);
 	glEnable(GL_DEPTH_TEST);
 	InitializeProgram();
 	initCamera();
 	getShaderVarLoc();
-	initBuffers();
 	p = new Pipeline(projection_loc, cam.matrix(), glm::vec3(0, 0, 0));
-	trackBall = new TrackBall(gwidth, gheight);
-	cube = new Cube(glm::vec3(10, 10, 10), glm::vec3(0, 0, 0));
+	trackBall = new TrackBall(gwidth, gheight);	
+	initParticles();
+	obj3d = new Mesh();
+	obj3d->LoadMesh("models/maleHead.obj");
 		
 }
 
 
-void initParticles(){
-	ps.setBoundary( glm::vec3(-20, -20.0f, -20.0f), glm::vec3(20.0f, 20.0f, 20.0f));
-	ps.setRandPos(true);
-	ps.setPnum(1000);
-	ps.initMemory();
-	ps.initParticles();
-}
+
 
 void display()
 {
@@ -217,41 +153,19 @@ void display()
 	glEnableVertexAttribArray(texcoord_loc);
 	
 	
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textureId);
-	glUniform1i(texture_loc, /*GL_TEXTURE*/0);
-
-	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers);
+	/*glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers);
 	glVertexAttribPointer(position_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, texcoord);
 	glVertexAttribPointer(texcoord_loc, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers);*/
 	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+	//ps->render(position_loc, color_loc);
 	
-	cube->render(position_loc, color_loc, texcoord_loc, texture_loc);
-	//glutWireSphere(10, 30, 30);
+	obj3d->Render(position_loc, texcoord_loc, normal_loc, texture_loc);
 	
-	/*p->MoveTo(glm::vec3(25, 0, 0));
-	p->Rotate(angle, glm::vec3(0, 0, 1));
-	p->Save();
-	glutWireSphere(10.f, 30, 30);
-	p->Rotate(angle, glm::vec3(1,0,0));
-	p->MoveTo(glm::vec3(10, 0, 0));
-	p->Retrieve();
-	p->Pass();
-	glutWireSphere(5.0f, 30, 30);*/
-	
-	//Displaying particles starts here
-	//glGenBuffers(1, &particleBuffers); 
-	//glBindBuffer(GL_ARRAY_BUFFER, particleBuffers);
-	//glBufferData(GL_ARRAY_BUFFER, ps.pnum*sizeof(glm::vec3), ps.mPos, GL_STREAM_DRAW);
-	//glVertexAttribPointer(position_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glDrawArrays(GL_POINTS, 0, (GLsizei)ps.pnum);			//Draw them to screen
-	//
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//Displaying particles ends here
+
 	
 	
 	
@@ -312,12 +226,12 @@ void mouse(int button, int state, int x, int y)
 
 void passiveMotion(int x, int y)
 {		
-	//cam.onMouseMove(x,y);	
+	cam.onMouseMove(x,y);	
 }
 
 void motion(int x, int y)
 {
-	trackBall->trackMovement(x, y);
+	//trackBall->trackMovement(x, y);
 }
 
 
@@ -370,12 +284,9 @@ void processKeyboard(float dt)
 void idle()
 {
 	float presentTime = glutGet(GLUT_ELAPSED_TIME);
-	float dt= 0.01;
-	angle += 0.2;
-	
+	float dt= 0.1;
 	processKeyboard(dt);
-	ps.simulate(dt, globalPos, glm::vec3(20,10,-5));
-	lastTime = presentTime;
+	ps->simulate(dt, glm::vec3(0.0, 0.0, 0.0), keyStates['c']);
 }
 
 void createGlutCallBacks()
@@ -407,7 +318,6 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
 		return 1;
 	}
-	initParticles();
 	initOpengl();
 	glutMainLoop();
 	return 0;

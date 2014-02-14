@@ -14,12 +14,13 @@ public:
 
 	void setBoundary(glm::vec3 bmin, glm::vec3 bmax);
 
-	void simulate(float dt, glm::vec3 center, glm::vec3 aux);
+	void simulate(float dt, glm::vec3 center, bool);
 	void setPnum(int);
 	void initMemory();
 	void initParticles();
 	void setRandPos(bool);
 	bool RandPos();
+	void render(int pos_loc, int color_loc);
 
 
 
@@ -38,8 +39,12 @@ public:
 	float dt; 
 	float lastTime; 
 
+	//Buffers
+	GLuint vbo;
+	GLuint cbo;
+
 private:
-	void gravitate(glm::vec3 center, glm::vec3 aux);
+	void gravitate(glm::vec3 center, bool isChaos);
 	void repel();
 	
 };

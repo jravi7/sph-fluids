@@ -11,8 +11,9 @@ uniform sampler2D gtexture;
 
 void main()
 {		
-		//vec4 dyncolor = vec4(gl_FragCoord.y, gl_FragCoord.x, gl_FragCoord.z, 1.0);
-		//outputColor = vec4(1.f, 1.f, 1.f, 1.f);
+		float ratio = gl_FragCoord.y / 500.0f;
+		//vec4 dyncolor = mix(vec4(gl_FragCoord.y/100, gl_FragCoord.x/100, gl_FragCoord.z, 1.0/100), color0, ratio);
+		vec4 dyncolor = vec4(gl_FragCoord.x/500, gl_FragCoord.y/500, gl_FragCoord.z/100, 1.0);
 		//outputColor = color0;
-		outputColor = texture2D(gtexture, texcoord0);
+		outputColor = dyncolor;
 }

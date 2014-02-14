@@ -5,7 +5,7 @@ Cube::Cube(glm::vec3 d, glm::vec3 p)
 {
 	dim = d; 
 	pos = p; 
-	tex = new Texture(GL_TEXTURE_2D, "textures/wood.jpg");
+	tex = new Texture(GL_TEXTURE_2D, "textures/blue.png");
 	computeVerts();
 	computeIndices();
 	computeTexCoords();
@@ -83,23 +83,64 @@ void Cube::initColors()
 }
 
 void Cube::computeTexCoords()
-{
+{	//front
 	texcoords[0] = 0.0f; 
 	texcoords[1] = 0.0f;
-
 	texcoords[2] = 1.0f; 
 	texcoords[3] = 0.0f; 
-
 	texcoords[4] = 1.0f; 
 	texcoords[5] = 1.0f;
-
 	texcoords[6] = 0.0f; 
 	texcoords[7] = 1.0f; 
 
-	for(unsigned int i = 1; i<6; i++)
-	{
-		memcpy(&texcoords[i*2*4], &texcoords[0], 2*4*sizeof(GLfloat)); 
-	}
+    //top
+    texcoords[8] = 0.f;
+    texcoords[9] = 1.f;
+    texcoords[10] = 0.f;
+    texcoords[11] = 0.f;
+    texcoords[12] = 1.f;
+    texcoords[13] = 0.f;
+    texcoords[14] = 1.f;
+    texcoords[15] = 1.f;
+    //back
+    texcoords[16] = 1.f;
+    texcoords[17] = 0.f;
+    texcoords[18] = 1.f;
+    texcoords[19] = 1.f;
+    texcoords[20] = 0.f;
+    texcoords[21] = 1.f;
+    texcoords[22] = 0.f;
+    texcoords[23] = 0.f;
+    //left
+    texcoords[24] = 0.f;
+    texcoords[25] = 0.f;
+    texcoords[26] = 1.f;
+    texcoords[27] = 0.f;
+    texcoords[28] = 1.f;
+    texcoords[29] = 1.f;
+    texcoords[30] = 0.f;
+    texcoords[31] = 1.f;
+    //right
+    texcoords[32] = 1.f;
+    texcoords[33] = 0.f;
+    texcoords[34] = 1.f;
+    texcoords[35] = 1.f;
+    texcoords[36] = 0.f;
+    texcoords[37] = 1.f;
+    texcoords[38] = 0.f;
+    texcoords[39] = 0.f;
+    //bottom
+    texcoords[40] = 1.f;
+    texcoords[41] = 1.f;
+    texcoords[42] = 0.f;
+    texcoords[43] = 1.f;
+    texcoords[44] = 0.f;
+    texcoords[45] = 0.f;
+    texcoords[46] = 1.f;
+    texcoords[47] = 0.f;
+	
+
+	
 }
 
 void Cube::computeVerts()
@@ -181,6 +222,7 @@ void Cube::computeIndices()
 	indices[33]  = 1;
 	indices[34]  = 0;
 	indices[35]  = 4;
+
 }
 
 void Cube::render(int pos_loc, int color_loc, int tex_loc, int sample)
