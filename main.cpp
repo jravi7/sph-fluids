@@ -16,14 +16,14 @@
 #include "image.h"
 #include "mesh.h"
 #include "particlesystem.h"
+#include "springSystem.h"
 
 Shader shader_obj;
 Pipeline* p; 
 Camera cam;
 TrackBall* trackBall;
 ParticleSystem* ps;
-
-Mesh* obj3d;
+SpringSystem* springs;
 
 
 int gwidth = 800;
@@ -92,12 +92,8 @@ void initCamera(){
 void initParticles()
 {
 	glPointSize(3.0f);
-	ps = new ParticleSystem();
-	ps->setBoundary(glm::vec3(-20, -20, -20), glm::vec3(20, 20, 20));
-	ps->setRandPos(true);
-	ps->setPnum(1000);
-	ps->initMemory();	
-	ps->initParticles();
+	ps = new ParticleSystem(glm::vec3(-50, -50, -50), glm::vec3(50, 50, 50),1000);
+	springs = new SpringSystem(1);
 }
 
 
@@ -110,8 +106,6 @@ void initOpengl()
 	p = new Pipeline(projection_loc, cam.matrix(), glm::vec3(0, 0, 0));
 	trackBall = new TrackBall(gwidth, gheight);	
 	initParticles();
-	obj3d = new Mesh();
-	obj3d->LoadMesh("models/maleHead.obj");
 		
 }
 
@@ -163,11 +157,10 @@ void display()
 	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
 	//ps->render(position_loc, color_loc);
 	
-	obj3d->Render(position_loc, texcoord_loc, normal_loc, texture_loc);
 	
-
-	
-	
+	//ps->render(position_loc, color_loc);
+	glPointSize(20.0);
+	springs->render(position_loc);
 	
 	glUseProgram(0);
 
@@ -283,10 +276,14 @@ void processKeyboard(float dt)
 
 void idle()
 {
-	float presentTime = glutGet(GLUT_ELAPSED_TIME);
-	float dt= 0.1;
+	static int last_time = 0;
+	int time = glutGet(GLUT_ELAPSED_TIME);
+	int elapsed = time-last_time;
+	float dt= 0.001f * elapsed;
+	last_time = time;
 	processKeyboard(dt);
-	ps->simulate(dt, glm::vec3(0.0, 0.0, 0.0), keyStates['c']);
+	ps->simulate(dt, glm::vec3(0.0, 0.0, 0.0));
+	springs->simulate(dt);
 }
 
 void createGlutCallBacks()

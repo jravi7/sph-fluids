@@ -1,188 +1,117 @@
 #include "ParticleSystem.h"
 
 
-ParticleSystem::ParticleSystem(void)
-{
-	//default boundaries
-	m_bmin = glm::vec3(-20.0f, -20.0f, -20.0f);
-	m_bmin = glm::vec3(20.0f, 20.0f, 20.0f);
-	//default particles
-	pnum = 50;
-	lastTime = 0;
-
-
-}
-
-
-ParticleSystem::~ParticleSystem(void)
-{
-
-}
-
-void ParticleSystem::setPnum(int n)
-{
-	pnum = n;
-}
-
-void ParticleSystem::setBoundary(glm::vec3 bmin, glm::vec3 bmax)
+ParticleSystem::ParticleSystem(glm::vec3 bmin, glm::vec3 bmax, int n)
 {
 	m_bmin = bmin;
 	m_bmax = bmax;
+	count = n;
+	init();
+	initbuffers();
 }
 
-
-
-void ParticleSystem::simulate(float dt, glm::vec3 center, bool isChaos)
+void ParticleSystem::init()
 {
-	gravitate(center, isChaos);
-	//repel();
-	for(int i=0; i< pnum;i++)
-	{
-		//integrate
-		*(mVel+i) += dt * *(mAcc+i);
-		*(mPos+i) += dt * *(mVel+i); 
-		
-
-		//check for boundary conditions
-		if((mPos+i)->x > m_bmax.x)
-			(mPos+i)->x = m_bmin.x;
-		if((mPos+i)->x < m_bmin.x)
-			(mPos+i)->x = m_bmax.x;
-
-		if((mPos+i)->y > m_bmax.y)
-			(mPos+i)->y = m_bmin.y;
-		if((mPos+i)->y < m_bmin.y)
-			(mPos+i)->y = m_bmax.y;
-		
-		if((mPos+i)->z > m_bmax.z)
-			(mPos+i)->z = m_bmin.z;
-		if((mPos+i)->z < m_bmin.z)
-			(mPos+i)->z = m_bmax.z;
-			
-	}
-}
-
-void ParticleSystem::initParticles()
-{
-	
-	//Randomize particle positions
 	//initialize velocity and randomize acceleration for each particle
-	if(isRandPos)
+	for(int i = 0; i < count; i++)
 	{
-		for(int i = 0; i < pnum; i++)
-		{
-			*(mPos+i) = randVec(m_bmin, m_bmax); 	
-			*(mVel+i) = glm::vec3(0,0,0);
-			*(mAcc+i) = randVec(glm::vec3(-0.2, -0.2, -0.2), glm::vec3(0.2, 0.2, 0.2));
-			*(mass+i) = randomize(1, 20);
-			*(color+i) = randVec(glm::vec3(0.0, 0.0, 0.0), glm::vec3(1., 0.2, 1.0));
-			
-		}
+		glm::vec3 p = randVec(m_bmin, m_bmax); 	
+		glm::vec3 v = glm::vec3(0,0,0);
+		glm::vec3 a = glm::vec3(0,0,0);
+		glm::vec3 f = glm::vec3(0,0,0);
+		glm::vec3 c = randVec(glm::vec3(0.0, 0.0, 0.0), glm::vec3(1.0, 1.0, 1.0));
+		float m = randomize(1, 100);
 
+		mPos.push_back(p);
+		mVel.push_back(v);
+		mAcc.push_back(a);
+		mforce.push_back(f);
+		mass.push_back(m);
+		mcolor.push_back(c);
 	}
-	//Place on a grid
-	else{
-		for(int i = 0; i<pnum;i++)
-		{
-			glm::vec3 p = glm::vec3();
-			p.x = 5; 
-			p.y = 0; 
-			p.z = -0; 
-			*(mPos+i) = p;
-		}
-	}
-	
-	
 }
 
-
-void ParticleSystem::initMemory()
+void ParticleSystem::initbuffers()
 {
-	mPos = (glm::vec3*) malloc(pnum*sizeof(glm::vec3));
-	mVel = (glm::vec3*) malloc(pnum*sizeof(glm::vec3));
-	mAcc = (glm::vec3*) malloc(pnum*sizeof(glm::vec3));
-	color = (glm::vec3*) malloc(pnum*sizeof(glm::vec3));
-	mass = (float*) malloc(pnum*sizeof(float));
-	force = (float*) malloc(pnum*sizeof(float));
-}
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-void ParticleSystem::setRandPos(bool val)
-{
-	isRandPos = val;
+	glGenBuffers(1, &cbo);
+	glBindBuffer(GL_ARRAY_BUFFER, cbo);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void ParticleSystem::render(int pos_loc, int color_loc)
 {	
-	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, pnum*sizeof(glm::vec3), mPos, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, count*sizeof(glm::vec3), &mPos[0], GL_STREAM_DRAW);
 	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	
-	
-	glGenBuffers(1, &cbo);
+
 	glBindBuffer(GL_ARRAY_BUFFER, cbo);
-	glBufferData(GL_ARRAY_BUFFER, pnum*sizeof(glm::vec3), mPos, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, count*sizeof(glm::vec3), &mcolor[0], GL_STREAM_DRAW);
 	glVertexAttribPointer(color_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	
 
-	glDrawArrays(GL_POINTS, 0, (GLsizei)pnum);
-
-	
-}
-
-bool ParticleSystem::RandPos()
-{
-	return isRandPos; 
+	glDrawArrays(GL_POINTS, 0, mPos.size());
 }
 
 
-void ParticleSystem::gravitate(glm::vec3 center,bool isChaos)
+
+
+void ParticleSystem::simulate(float dt, glm::vec3 center)
 {
-	float M = 100;   /// ----> Mass of the mouse pointer in kg
-	for(int i = 0; i<pnum; i++)
+	for(int i=0; i< count;i++)
 	{
-		glm::vec3 temp = center - *(mPos+i);
-		float rSquared = glm::dot(temp, temp); 
-		float rSquareRoot = sqrt(rSquared);
-		float f = *(mass+i) * M / rSquared; 
-
-
-		glm::vec3 newAcc = glm::vec3();
-
-		float m = *(mass+i) / 100;
-
-		newAcc =  glm::normalize(temp);
+		gravitate(center, mPos[i], mAcc[i], mforce[i], mass[i]);
 		
-		if(isChaos)
-			*(mAcc+i) = newAcc*f/m;
-		else
-			*(mAcc+i) = newAcc;
+		//integrate
+		mVel[i] += dt * (mAcc[i]);
+		mPos[i] += dt * (mVel[i]);
+		
+		mAcc[i] = glm::vec3(0,0,0);
+
+		//check for boundary conditions
+		if(mPos[i].x > m_bmax.x)
+			mVel[i].x *= -0.9;
+		if(mPos[i].x < m_bmin.x)
+			mPos[i].x *= -0.9;
+
+		if(mPos[i].y > m_bmax.y)
+			mPos[i].y *= -0.9;
+		if(mPos[i].y < m_bmin.y)
+			mPos[i].y *= -0.9;
+		
+		if(mPos[i].z > m_bmax.z)
+			mPos[i].z *= -0.9;
+		if(mPos[i].z < m_bmin.z)
+			mPos[i].z *= -0.9;
+			
 	}
 }
 
-void ParticleSystem::repel()
+void ParticleSystem::print(glm::vec3 p)
 {
-	for(int i = 0; i < pnum ; i++)
-	{
-		for(int j = 0 ; j < pnum ; j++)
-		{
-			if(i != j)
-			{
-				glm::vec3 v1 = *(mPos+i);
-				glm::vec3 v2 = *(mPos+j);
-				glm::vec3 temp = v2 - v1;
-				float rSquared = glm::dot(temp, temp);
-				float rSquareRoot = sqrt(rSquared);
+	std::cout<<"x:"<<p.x<<"y:"<<p.y<<"z:"<<p.z<<std::endl;
+}
 
-				float f = *(mass+i) * *(mass+j) / rSquared; 
+void ParticleSystem::gravitate(glm::vec3 center, const glm::vec3 &p, glm::vec3 &a, glm::vec3 &f, const float &m)
+{
+	float M = 1000;   /// ----> Mass of the mouse pointer in kg
 
-				f /= *(mass+i);
+	glm::vec3 temp = center - p;
+	float rSquared = glm::dot(temp, temp); 
+	float rSquareRoot = sqrt(rSquared);
+	float mag = M / rSquared; 
+	glm::normalize(temp);
+	f = temp * mag;
+	a = f/m;
+}
 
-				*(mAcc+i) = f * glm::normalize(temp);
-			}
-				
-		}
-	}
+ParticleSystem::~ParticleSystem(void)
+{
+
 }

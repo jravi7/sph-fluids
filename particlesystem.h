@@ -1,6 +1,5 @@
 #pragma once
 #include <glm/glm.hpp>
-#include "Particle.h"
 #include <vector>
 #include <GL/glew.h>
 #include "util.h"
@@ -9,43 +8,36 @@
 class ParticleSystem
 {
 public:
-	ParticleSystem(void);
+	ParticleSystem(glm::vec3 bmin, glm::vec3 bmax, int n);
 	~ParticleSystem(void);
-
-	void setBoundary(glm::vec3 bmin, glm::vec3 bmax);
-
-	void simulate(float dt, glm::vec3 center, bool);
-	void setPnum(int);
-	void initMemory();
-	void initParticles();
-	void setRandPos(bool);
-	bool RandPos();
+	void simulate(float dt, glm::vec3 center);
+	
 	void render(int pos_loc, int color_loc);
 
 
 
+	
+
+private:
+	void init();
+	void initbuffers();
+	void print(glm::vec3);
+	void gravitate(glm::vec3 center, const glm::vec3 &p, glm::vec3 &a, glm::vec3 &f, const float &m);
+
 
 	//Invisible boundary of the particle system
-	bool isRandPos;			//Should init particle positions be randomized or placed on a grid? 
 	glm::vec3 m_bmin;					//boundary min
 	glm::vec3 m_bmax;					//boundary max
-	int pnum;							//Number of particles
-	glm::vec3 *mPos;
-	glm::vec3 *mVel;
-	glm::vec3 *mAcc;
-	glm::vec3 *color;
-	float *mass; 
-	float *force; 
-	float dt; 
-	float lastTime; 
-
+	int count;							//Number of particles
+	std::vector<glm::vec3> mPos;
+	std::vector<glm::vec3> mVel;
+	std::vector<glm::vec3> mAcc;
+	std::vector<glm::vec3> mcolor;
+	std::vector<glm::vec3> mforce;
+	std::vector<float> mass; 
 	//Buffers
 	GLuint vbo;
 	GLuint cbo;
-
-private:
-	void gravitate(glm::vec3 center, bool isChaos);
-	void repel();
 	
 };
 
