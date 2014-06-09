@@ -23,7 +23,7 @@ int Image::height()
 	return mheight;
 }
 
-ILubyte* Image::data()
+unsigned char* Image::data()
 {
 	return image;
 }

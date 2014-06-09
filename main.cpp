@@ -17,13 +17,14 @@
 #include "mesh.h"
 #include "particlesystem.h"
 #include "springSystem.h"
+#include "grid.h"
 
 Shader shader_obj;
 Pipeline* p; 
 Camera cam;
 TrackBall* trackBall;
 ParticleSystem* ps;
-SpringSystem* springs;
+Grid* grid;
 
 
 int gwidth = 800;
@@ -80,20 +81,13 @@ void initCamera(){
 	cam.init();
 	cam.setFov(60.0f);
 	cam.setAspRatio(gwidth/gheight);
-	cam.setNearFar(0.1f, 1000.f);
+	cam.setNearFar(0.1f, 5000.f);
 	cam.setPosition(glm::vec3(0, 0, 50));
 	cam.lookAt(glm::vec3(0.0, 0.0, 0.0));
-	cam.setVelocity(20);
+	cam.setVelocity(100);
 	printf("%d", cam.mMouseX);
 	printf("%d", cam.mMouseY);
 	glutWarpPointer(cam.mMouseX, cam.mMouseY);
-}
-
-void initParticles()
-{
-	glPointSize(3.0f);
-	ps = new ParticleSystem(glm::vec3(-50, -50, -50), glm::vec3(50, 50, 50),1000);
-	springs = new SpringSystem(1);
 }
 
 
@@ -105,12 +99,70 @@ void initOpengl()
 	getShaderVarLoc();
 	p = new Pipeline(projection_loc, cam.matrix(), glm::vec3(0, 0, 0));
 	trackBall = new TrackBall(gwidth, gheight);	
-	initParticles();
+	grid = new Grid(glm::vec3(50,50,0),100, 100, 10);
+	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 10);
 		
 }
 
 
+void processKeyboard(float dt)
+{
 
+
+	if(keyStates['a'] || keyStates['A'])
+	{
+		cam.offsetPosition(cam.velocity()*dt*-cam.right());
+	}
+
+	if(keyStates['s'] || keyStates['S'])
+	{
+		cam.offsetPosition(cam.velocity()*dt*-cam.forward());
+	}
+
+	if(keyStates['w'] || keyStates['W'])
+	{
+		cam.offsetPosition(cam.velocity()*dt*cam.forward());
+	}
+
+	if(keyStates['d'] || keyStates['D'])
+	{
+		cam.offsetPosition(cam.velocity()*dt*cam.right());
+	}
+
+	if(keyStates['j'] || keyStates['J'])
+	{
+		rot = glm::rotate(rot,-1.f, glm::vec3(0.0, 1.0, 0.0));
+	}
+
+	if(keyStates['l'] || keyStates['L'])
+	{
+		rot = glm::rotate(rot ,1.f, glm::vec3(0.0, 1.0, 0.0));
+	}
+	if(keyStates['k'] || keyStates['k'])
+	{
+		rot = glm::rotate(rot,-1.f, glm::vec3(1.0, 0.0, 0.0));
+	}
+
+	if(keyStates['i'] || keyStates['I'])
+	{
+		rot = glm::rotate(rot ,1.f, glm::vec3(1.0, 0.0, 0.0));
+	}
+
+}
+
+
+
+
+void idle()
+{
+	static int last_time = 0;
+	int time = glutGet(GLUT_ELAPSED_TIME);
+	int elapsed = time-last_time;
+	float dt= 0.001f * elapsed;
+	last_time = time;
+	processKeyboard(dt);
+	ps->simulate(dt, glm::vec3(50,50,0));
+} 
 
 void display()
 {
@@ -159,8 +211,11 @@ void display()
 	
 	
 	//ps->render(position_loc, color_loc);
-	glPointSize(20.0);
-	springs->render(position_loc);
+	glPointSize(3.0);
+	grid->render(position_loc, color_loc, normal_loc);
+	ps->render(position_loc, color_loc);
+
+	
 	
 	glUseProgram(0);
 
@@ -229,62 +284,7 @@ void motion(int x, int y)
 
 
 
-void processKeyboard(float dt)
-{
-	
-	
-	if(keyStates['a'] || keyStates['A'])
-	{
-		cam.offsetPosition(cam.velocity()*dt*-cam.right());
-	}
 
-	if(keyStates['s'] || keyStates['S'])
-	{
-		cam.offsetPosition(cam.velocity()*dt*-cam.forward());
-	}
-
-	if(keyStates['w'] || keyStates['W'])
-	{
-		cam.offsetPosition(cam.velocity()*dt*cam.forward());
-	}
-
-	if(keyStates['d'] || keyStates['D'])
-	{
-		cam.offsetPosition(cam.velocity()*dt*cam.right());
-	}
-
-	if(keyStates['j'] || keyStates['J'])
-	{
-		rot = glm::rotate(rot,-1.f, glm::vec3(0.0, 1.0, 0.0));
-	}
-
-	if(keyStates['l'] || keyStates['L'])
-	{
-		rot = glm::rotate(rot ,1.f, glm::vec3(0.0, 1.0, 0.0));
-	}
-	if(keyStates['k'] || keyStates['k'])
-	{
-		rot = glm::rotate(rot,-1.f, glm::vec3(1.0, 0.0, 0.0));
-	}
-
-	if(keyStates['i'] || keyStates['I'])
-	{
-		rot = glm::rotate(rot ,1.f, glm::vec3(1.0, 0.0, 0.0));
-	}
-	
-}
-
-void idle()
-{
-	static int last_time = 0;
-	int time = glutGet(GLUT_ELAPSED_TIME);
-	int elapsed = time-last_time;
-	float dt= 0.001f * elapsed;
-	last_time = time;
-	processKeyboard(dt);
-	ps->simulate(dt, glm::vec3(0.0, 0.0, 0.0));
-	springs->simulate(dt);
-}
 
 void createGlutCallBacks()
 {

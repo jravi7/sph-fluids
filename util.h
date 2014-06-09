@@ -23,7 +23,6 @@ inline glm::vec3 randVec(glm::vec3 min, glm::vec3 max)
 
 	v.x = (((std::rand() / float(RAND_MAX) * max.x*2) - min.x));
 	v.y = (((std::rand() / float(RAND_MAX) * max.y*2) - min.y));
-	v.z = (((std::rand() / float(RAND_MAX) * max.y*2) - min.z));
 	v.z = 0;
 
 

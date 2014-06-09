@@ -2,7 +2,6 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 #include <iostream>
-#include <IL\il.h>
 #include <SOIL.h>
 
 

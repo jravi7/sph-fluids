@@ -78,6 +78,7 @@
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="cube.cpp" />
+    <ClCompile Include="grid.cpp" />
     <ClCompile Include="image.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
@@ -92,6 +93,7 @@
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="cube.h" />
+    <ClInclude Include="grid.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="particle.h" />

@@ -19,7 +19,7 @@ void ParticleSystem::init()
 		glm::vec3 v = glm::vec3(0,0,0);
 		glm::vec3 a = glm::vec3(0,0,0);
 		glm::vec3 f = glm::vec3(0,0,0);
-		glm::vec3 c = randVec(glm::vec3(0.0, 0.0, 0.0), glm::vec3(1.0, 1.0, 1.0));
+		glm::vec3 c = randVec(glm::vec3(0,0,0), glm::vec3(1,1,1));
 		float m = randomize(1, 100);
 
 		mPos.push_back(p);
@@ -35,12 +35,10 @@ void ParticleSystem::initbuffers()
 {
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glGenBuffers(1, &cbo);
 	glBindBuffer(GL_ARRAY_BUFFER, cbo);
-	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
