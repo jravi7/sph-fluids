@@ -88,7 +88,6 @@
     <ClCompile Include="springSystem.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="trackball.cpp" />
-    <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />

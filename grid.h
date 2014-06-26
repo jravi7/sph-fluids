@@ -29,6 +29,5 @@ private:
 	int m_height;				//total height along y-axis
 	int m_cellsize;				//side of a cell (square)
 	glm::vec3 m_pos;			//centre of the grid
-
 };
 

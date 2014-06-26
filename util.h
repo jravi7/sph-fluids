@@ -11,6 +11,11 @@ inline float randomize(float min, float max)
 	return float(((std::rand() / float(RAND_MAX)) * max*2) - min);
 }
 
+inline float rand1(float min, float max)
+{
+	return min + ((max-min) * (float)rand() / (float)(RAND_MAX-1));
+}
+
 inline glm::vec3 randVec(glm::vec3 min, glm::vec3 max)
 {
 	glm::vec3 v; 

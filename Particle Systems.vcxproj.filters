@@ -33,9 +33,6 @@
     <ClCompile Include="particlesystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="util.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="pipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

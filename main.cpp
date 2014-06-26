@@ -27,8 +27,8 @@ ParticleSystem* ps;
 Grid* grid;
 
 
-int gwidth = 800;
-int gheight = 600; 
+int gwidth = 1920;
+int gheight = 1080; 
 //Keyboard variables
 bool keyStates[256];
 
@@ -82,8 +82,8 @@ void initCamera(){
 	cam.setFov(60.0f);
 	cam.setAspRatio(gwidth/gheight);
 	cam.setNearFar(0.1f, 5000.f);
-	cam.setPosition(glm::vec3(0, 0, 50));
-	cam.lookAt(glm::vec3(0.0, 0.0, 0.0));
+	cam.setPosition(glm::vec3(50, 50, 50));
+	cam.lookAt(glm::vec3(50, 50, 0.0));
 	cam.setVelocity(100);
 	printf("%d", cam.mMouseX);
 	printf("%d", cam.mMouseY);
@@ -100,7 +100,7 @@ void initOpengl()
 	p = new Pipeline(projection_loc, cam.matrix(), glm::vec3(0, 0, 0));
 	trackBall = new TrackBall(gwidth, gheight);	
 	grid = new Grid(glm::vec3(50,50,0),100, 100, 10);
-	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 1000);
+	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 40);
 		
 }
 
@@ -161,7 +161,7 @@ void idle()
 	float dt= 0.001f * elapsed;
 	last_time = time;
 	processKeyboard(dt);
-	ps->simulate(dt, glm::vec3(50,50,0));
+	ps->simulate(dt, glm::vec3(50,50,0), keyStates['p']);
 } 
 
 void display()
@@ -306,7 +306,7 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv); 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_ACCUM);
 	glutInitWindowSize(gwidth,gheight);
-	glutInitWindowPosition(100, 200);
+	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Physika - Particle Systems");
 	createGlutCallBacks();
 	GLenum res = glewInit();
