@@ -33,20 +33,22 @@ void ParticleSystem::init()
 			glm::vec3 dir = glm::vec3(34, 45, 0);
 			dir = glm::normalize(dir);
 			float rand = rand1(0.9, 1.4f);
-			//glm::vec3 p = glm::vec3((i+1)*spacing,(j+1)*spacing,0);
-			glm::vec3 p = glm::vec3(10, 15, 0) * rand;
-			glm::vec3 v = speed * dir * rand;
-			glm::vec3 a = glm::vec3(0,-1.8,0);
-			glm::vec3 f = glm::vec3(0,0,0);
-			glm::vec3 c = randVec(glm::vec3(0,0,0), glm::vec3(1,1,1));
-			float m = 0.02; //kg
+			glm::vec3 p = glm::vec3(50, 80, 0);
+			glm::vec3 v = glm::vec3(rand1(rand1(-6.6, 0), rand1(0, 4.5)), rand1(0, -4.5), 0);
+			glm::vec3 a = glm::vec3(0, -9.8, 0);
+			glm::vec3 vprev = v - (0.5f * 0.003f * a); 
+			glm::vec3 f = glm::vec3(0, 0, 0);
+			glm::vec3 c = glm::vec3(rand1(0.2,0.6), rand1(0.1, 0.9), rand1(0.7, 0.9));
+			float m = rand1(0.9, 2);
 			std::cout<<std::endl;
 			std::cout<<"Particle "<<count+1<<std::endl;
 			
-			mHashTable[computeHash(p)].push_back(count);
+//			mHashTable[computeHash(p)].push_back(count);
 
 			mPos.push_back(p);
 			mVel.push_back(v);
+			mVelPrev.push_back(vprev);
+
 			mAcc.push_back(a);
 			mforce.push_back(f);
 			mass.push_back(m);
@@ -146,38 +148,109 @@ void ParticleSystem::render(int pos_loc, int color_loc)
 
 
 
-void ParticleSystem::simulate(float dt, glm::vec3 center, bool isPause)
+void ParticleSystem::update(float dt, glm::vec3 center, bool isPause)
 {
+
+	//apply forces; 
+	//update velocity and position
+	//checkedges
 	if(!isPause)
 	{
+		
+		applyRepel();
+		applyForces();
 		for(int i=0; i< mPos.size();i++)
 		{
+			glm::vec3 vnext = mVelPrev[i] + dt * mAcc[i];
+			mVel[i] = 0.5f * ( mVelPrev[i] + vnext );
+			mVelPrev[i] = vnext;
+
 			//integrate
-			mVel[i] += dt * (mAcc[i]);
-			mPos[i] += dt * (mVel[i]);
-	//		print(mPos[i]);
-	
-			mAcc[i] = glm::vec3(0,0,0);
-
-			//check for boundary conditions
-			if(mPos[i].x > m_bmax.x)
-				mVel[i].x *= -1;
-			if(mPos[i].x < m_bmin.x)
-				mVel[i].x *= -1;
-
-			if(mPos[i].y > m_bmax.y)
-				mVel[i].y *= -1;
-			if(mPos[i].y < m_bmin.y)
-				mVel[i].y *= -1;
+			//mVel[i] += dt * (mAcc[i]);
+			mPos[i] += dt * (vnext);
+			//std::cout<<"Particle "<<i<<std::endl;
+		//	print(mPos[i]);
 		
-			/*if(mPos[i].z > m_bmax.z)
-				mVel[i].z *= -0.9;
-			if(mPos[i].z < m_bmin.z)
-				mVel[i].z *= -0.9;
-				*/
+	
+			//mAcc[i] *= 0.f;
+
+			
 		}
+		checkEdges();
+		
 	}
 }
+
+void ParticleSystem::applyRepel()
+{
+	glm::vec3 center = glm::vec3(50, 20, 0);
+
+	for(int i=0; i< mPos.size();i++)
+	{
+		glm::vec3 d = center - mPos[i];
+		float mag = glm::length(d);
+	
+		d = glm::normalize(d);
+		float force = - 1 * 100 / (mag * mag);
+		d = d * force; 
+
+		mforce[i] = d/mass[i];
+	}
+}
+
+void ParticleSystem::applyForces()
+{
+	glm::vec3 gravity = glm::vec3(0,-9.8, 0);
+	glm::vec3 wind  = glm::vec3(0, 5, 0);
+	for(int i=0; i< mPos.size();i++)
+	{
+		mforce[i] += (wind + gravity) / mass[i]; 
+		mAcc[i] = mforce[i];
+	}
+}
+
+void ParticleSystem::checkEdges()
+{
+	for(int i=0; i< mPos.size();i++)
+		{
+			//check for boundary conditions
+			if(mPos[i].x > m_bmax.x)
+			{
+				mVelPrev[i].x *= -1;
+				mPos[i].x = m_bmax.x;
+			}
+			if(mPos[i].x < m_bmin.x)
+			{
+				mVelPrev[i].x *= -1;
+				mPos[i].x = m_bmin.x;
+			}
+
+			if(mPos[i].y > m_bmax.y)
+			{
+				mVelPrev[i].y *= -1;
+				mPos[i].y =m_bmax.y;
+			}
+			if(mPos[i].y < m_bmin.y)
+			{
+				mVelPrev[i].y *= -1;
+				mPos[i].y =m_bmin.y;
+			}
+		
+			/*if(mPos[i].z > m_bmax.z)
+			{
+				mVel[i].z *= -0.9;
+				mPos[i].z = m_bmax.z;
+			}
+			if(mPos[i].z < m_bmin.z)
+			{
+				mVel[i].z *= -0.9;
+				mPos[i].z = m_bmin.z;
+			}*/
+				
+		}
+}
+
+
 
 void ParticleSystem::computeDensity()
 {
