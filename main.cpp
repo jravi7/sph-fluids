@@ -100,7 +100,7 @@ void initOpengl()
 	p = new Pipeline(projection_loc, cam.matrix(), glm::vec3(0, 0, 0));
 	trackBall = new TrackBall(gwidth, gheight);	
 	grid = new Grid(glm::vec3(50,50,0),100, 100, 10);
-	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 30);
+	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 5);
 		
 }
 
@@ -161,7 +161,7 @@ void idle()
 	float dt= 0.001 * elapsed;
 	last_time = time;
 	processKeyboard(dt);
-	ps->update(dt, glm::dvec3(50,50,0), keyStates['p']);
+	//ps->update(dt, glm::dvec3(50,50,0), keyStates['p']);
 } 
 
 void display()
@@ -212,7 +212,7 @@ void display()
 	
 	//ps->render(position_loc, color_loc);
 	glPointSize(5.0);
-	grid->render(position_loc, color_loc, normal_loc);
+	//grid->render(position_loc, color_loc, normal_loc);
 	ps->render(position_loc, color_loc);
 
 	

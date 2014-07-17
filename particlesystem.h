@@ -25,15 +25,18 @@ private:
 	void print(glm::dvec3);
 	void gravitate(glm::dvec3 center, const glm::dvec3 &p, glm::dvec3 &a, glm::dvec3 &f, const float &m);
 	void neighbours(glm::dvec3 p);
+	void clearForces();
 	void computeDensityPressure();
 	void computePressureForce();
 	void computeViscousForce();
+	void computeGravityForce();
+	void step(float dt);
 	void checkEdges();
 	//Invisible boundary of the particle system
 	glm::vec3 m_bmin;					//boundary min
 	glm::vec3 m_bmax;					//boundary max
 	int mN;							//NxN grid of particles
-	std::vector<glm::dvec3> mPos;
+	std::vector<glm::vec3> mPos;
 	std::vector<glm::dvec3> mVel;
 	std::vector<glm::dvec3> mVelPrev;
 	std::vector<glm::dvec3> mAcc;
