@@ -27,13 +27,7 @@
     <ClCompile Include="camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="trackball.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="particlesystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cube.cpp">
@@ -62,9 +56,6 @@
     <ClInclude Include="camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="trackball.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="particlesystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -72,9 +63,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="particle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cube.h">

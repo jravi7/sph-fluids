@@ -10,8 +10,6 @@
 #include <glm/gtx/transform.hpp>
 #include <math.h>
 #include "Camera.h"
-#include "TrackBall.h"
-#include "pipeline.h"
 #include "cube.h"
 #include "image.h"
 #include "mesh.h"
@@ -20,9 +18,8 @@
 #include "grid.h"
 
 Shader shader_obj;
-Pipeline* p; 
 Camera cam;
-TrackBall* trackBall;
+
 ParticleSystem* ps;
 Grid* grid;
 
@@ -55,9 +52,6 @@ GLuint texcoord;
 glm::vec3 *partPos; 
 
 
-
-
-
 void InitializeProgram()
 {
 	shader_obj.add(GL_VERTEX_SHADER, "vs.glsl");
@@ -85,8 +79,6 @@ void initCamera(){
 	cam.setPosition(glm::vec3(50, 50, 150));
 	cam.lookAt(glm::vec3(50, 50, 0.0));
 	cam.setVelocity(100);
-	printf("%d", cam.mMouseX);
-	printf("%d", cam.mMouseY);
 	glutWarpPointer(cam.mMouseX, cam.mMouseY);
 }
 
@@ -97,10 +89,9 @@ void initOpengl()
 	InitializeProgram();
 	initCamera();
 	getShaderVarLoc();
-	p = new Pipeline(projection_loc, cam.matrix(), glm::vec3(0, 0, 0));
-	trackBall = new TrackBall(gwidth, gheight);	
+	
 	grid = new Grid(glm::vec3(50,50,0),100, 100, 10);
-	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 5);
+	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 25);
 		
 }
 
@@ -151,8 +142,6 @@ void processKeyboard(float dt)
 }
 
 
-
-
 void idle()
 {
 	static int last_time = 0;
@@ -161,7 +150,7 @@ void idle()
 	float dt= 0.001 * elapsed;
 	last_time = time;
 	processKeyboard(dt);
-	//ps->update(dt, glm::dvec3(50,50,0), keyStates['p']);
+	ps->update(dt, glm::dvec3(50,50,0), keyStates['p']);
 } 
 
 void display()
@@ -181,7 +170,7 @@ void display()
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
 	
-	glm::mat4 m = cam.matrix() *trackBall->transform()*model;
+	glm::mat4 m = cam.matrix();
 	
 	//Pass uniforms to shader
 	if(projection_loc != -1)
@@ -190,9 +179,6 @@ void display()
 	//p->LoadView(cam.matrix());	
 	//p->LoadIdentity();
 	
-
-	
-
 	//Enable the position location in the shader
 	glEnableVertexAttribArray(position_loc);
 	glEnableVertexAttribArray(color_loc);
@@ -212,7 +198,7 @@ void display()
 	
 	//ps->render(position_loc, color_loc);
 	glPointSize(5.0);
-	//grid->render(position_loc, color_loc, normal_loc);
+	grid->render(position_loc, color_loc, normal_loc);
 	ps->render(position_loc, color_loc);
 
 	
@@ -257,19 +243,7 @@ void mwheel(int wheel, int direction, int x, int y)
 
 void mouse(int button, int state, int x, int y)
 {
-	if(state == GLUT_DOWN)
-	{
-		trackBall->setBtnState(true);
-		trackBall->trackPoint(x, y);
-		cout<<"onMOuseDown"<<endl;
-		cout<<trackBall->getIsDown();
-	}
-	if(state == GLUT_UP)
-	{
-		trackBall->setBtnState(false);
-		cout<<"onMouseUp"<<endl;
-		cout<<trackBall->getIsDown();
-	}
+
 }
 
 void passiveMotion(int x, int y)
@@ -279,12 +253,8 @@ void passiveMotion(int x, int y)
 
 void motion(int x, int y)
 {
-	//trackBall->trackMovement(x, y);
+
 }
-
-
-
-
 
 void createGlutCallBacks()
 {
