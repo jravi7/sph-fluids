@@ -91,7 +91,7 @@ void initOpengl()
 	getShaderVarLoc();
 	
 	grid = new Grid(glm::vec3(50,50,0),100, 100, 10);
-	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 25);
+	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 250);
 		
 }
 
@@ -147,7 +147,7 @@ void idle()
 	static int last_time = 0;
 	int time = glutGet(GLUT_ELAPSED_TIME);
 	int elapsed = time-last_time;
-	float dt= 0.001 * elapsed;
+	float dt= 0.03;// * elapsed;
 	last_time = time;
 	processKeyboard(dt);
 	ps->update(dt, glm::dvec3(50,50,0), keyStates['p']);
@@ -248,7 +248,7 @@ void mouse(int button, int state, int x, int y)
 
 void passiveMotion(int x, int y)
 {		
-	cam.onMouseMove(x,y);	
+	//cam.onMouseMove(x,y);	
 }
 
 void motion(int x, int y)

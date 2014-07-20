@@ -91,5 +91,6 @@
     <None Include="vs.glsl">
       <Filter>Source Files\shaders</Filter>
     </None>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>

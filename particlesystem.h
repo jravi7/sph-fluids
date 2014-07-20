@@ -6,6 +6,12 @@
 #include "util.h"
 #include <math.h>
 
+struct Wall{
+	float nx; 
+	float ny; 
+	float c;
+};
+
 class ParticleSystem
 {
 public:
@@ -25,8 +31,10 @@ private:
 	void computePressureForce();
 	void computeViscousForce();
 	void computeGravityForce();
+	void computeRepulsion();
 	void step(float dt);
-	void checkEdges();
+	void initWalls();
+	void checkEdges(float dt);
 	//Invisible boundary of the particle system
 	glm::vec3 m_bmin;					//boundary min
 	glm::vec3 m_bmax;					//boundary max
@@ -40,6 +48,7 @@ private:
 	std::vector<double> m_density; 
 	std::vector<double> m_pressure; 
 	std::vector<float> mass; 
+	std::vector<Wall> walls;
 	glm::ivec3 m_domain;
 	double m_wPolyKernel;
 	double m_wSpikyKernel;
@@ -47,6 +56,7 @@ private:
 
 	//Spatial Grid
 	std::vector<std::vector<int>> mHashTable;
+	std::vector<std::vector<int>> mZeroTable;
 
 	//Buffers
 	GLuint vbo;

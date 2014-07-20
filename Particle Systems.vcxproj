@@ -101,6 +101,7 @@
     <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram.cd" />
     <None Include="fs.glsl" />
     <None Include="vs.glsl" />
   </ItemGroup>
