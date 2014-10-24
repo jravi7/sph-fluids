@@ -77,31 +77,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
-    <ClCompile Include="cube.cpp" />
     <ClCompile Include="grid.cpp" />
-    <ClCompile Include="image.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="mesh.cpp" />
     <ClCompile Include="particlesystem.cpp" />
     <ClCompile Include="shader.cpp" />
-    <ClCompile Include="springSystem.cpp" />
-    <ClCompile Include="texture.cpp" />
+    <ClCompile Include="SPHSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
-    <ClInclude Include="cube.h" />
     <ClInclude Include="grid.h" />
-    <ClInclude Include="image.h" />
-    <ClInclude Include="mesh.h" />
-    <ClInclude Include="particle.h" />
     <ClInclude Include="particlesystem.h" />
     <ClInclude Include="shader.h" />
-    <ClInclude Include="springSystem.h" />
-    <ClInclude Include="texture.h" />
+    <ClInclude Include="SPHSystem.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClassDiagram.cd" />
     <None Include="fs.glsl" />
     <None Include="vs.glsl" />
   </ItemGroup>

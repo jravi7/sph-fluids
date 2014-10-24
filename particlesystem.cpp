@@ -12,8 +12,9 @@ ParticleSystem::ParticleSystem(glm::vec3 bmin, glm::vec3 bmax, int n)
 	m_domain = glm::ivec3(m_bmax - m_bmin);
 	mN = n;
 	
-	mSupportRadius = 0.0457;		//h
-	mSimScale = 0.04;
+	mSupportRadius = 0.1;		//h
+	mSimScale = 0.004;
+	iteration = 0; 
 
 	mZeroTable.resize(m_domain.x * m_domain.y);
 	mHashTable.resize(m_domain.x * m_domain.y);
@@ -25,10 +26,10 @@ ParticleSystem::ParticleSystem(glm::vec3 bmin, glm::vec3 bmax, int n)
 void ParticleSystem::init()
 {
 	int count = 0;
-	float spacing = mSupportRadius/mSimScale;
+	float spacing = mSupportRadius /0.1;
 	//particle initial position domain
-	int w = 50; 
-	int h = 50; 
+	int w = 60; 
+	int h = 60; 
 
 	//mass calculations
 	float m = 1000 * 0.1 / mN;
@@ -39,8 +40,8 @@ void ParticleSystem::init()
 		{
 		
 			if(count < mN){
-			glm::vec3 p = glm::vec3(10+(i*spacing), 10+(j*spacing), 0);
-			glm::dvec3 v = double(mSimScale) * glm::dvec3(rand1(rand1(-6.6, 0), rand1(0, 4.5)), rand1(0, -4.5), 0);
+			glm::vec3 p = glm::vec3(10+(i*1), 10+(j*1), 0);
+			glm::dvec3 v = glm::dvec3(0.0, 0.0, 0.0);
 			glm::dvec3 a = glm::dvec3(0, 0, 0);
 			glm::dvec3 vprev = double(mSimScale) * glm::dvec3(rand1(rand1(-6.6, 0), rand1(0, 4.5)), rand1(0, -4.5), 0);
 			glm::dvec3 f = glm::dvec3(0, 0, 0);
@@ -91,12 +92,12 @@ void ParticleSystem::initWalls()
 	//right
 	w3.nx = -1.f; 
 	w3.ny = 0.f;
-	w3.c = -m_domain.x;
+	w3.c = -(m_domain.x);
 
 	//top
 	w4.nx = 0.f; 
 	w4.ny = -1.f; 
-	w4.c = -m_domain.y; 
+	w4.c = -(m_domain.y); 
 
 	walls.push_back(w1);
 	walls.push_back(w2);
@@ -104,12 +105,12 @@ void ParticleSystem::initWalls()
 	walls.push_back(w4);
 }
 
-int ParticleSystem::computeHash(glm::vec3 p)
+int ParticleSystem::computeHash(glm::vec3 p, int i)
 {
 	if(p.x < 0 || p.y < 0 || p.x > 100  || p.y > 100)
 		cout<<"Out of bounds"<<std::endl;
 
-	float wCellSize = mSupportRadius / mSimScale;
+	float wCellSize = 0.0457 / 0.04;
 	int x = floor(p.x / wCellSize);
 	int y = floor (p.y / wCellSize);
 	int hash = x + 100 * y; 
@@ -120,7 +121,7 @@ int ParticleSystem::computeHash(glm::vec3 p)
 std::vector<int> ParticleSystem::neighbours(glm::vec3 p)
 {
 	std::vector<int> list; 
-	float rad = mSupportRadius/mSimScale;
+	float rad = 0.0457/0.04;
 
 	glm::vec3 min = glm::vec3(p.x-rad,p.y-rad, 0);
 	glm::vec3 max = glm::vec3(p.x+rad,p.y+rad, 0);
@@ -130,7 +131,7 @@ std::vector<int> ParticleSystem::neighbours(glm::vec3 p)
 		for(float y = min.y; y <= max.y; y+=rad)
 		{
 			glm::vec3 pp = glm::vec3(x,y,0);
-			int hash = computeHash(pp);
+			int hash = computeHash(pp, 0);
 			if(hash > -1){
 				std::vector<int> cell = mHashTable[hash];
 				for(int i = 0; i < cell.size(); i++)
@@ -189,50 +190,132 @@ void ParticleSystem::update(float dt, glm::dvec3 center, bool isPause)
 		
 		clearForces();
 		//updateGrid();
-		/*computeDensityPressure();
-		computePressureForce();
-		computeViscousForce();*/
+		//computeDensityPressure();
+		//computePressureForce();
+		//computeViscousForce();
 		computeRepulsion();
 		//computeGravityForce();
-		//checkEdges(dt);
 		step(dt);
+		checkEdges(dt);
+		iteration++;
+		cout<<"iteration: "<<iteration<<endl;
 	}
 }
 
 void ParticleSystem::step(float dt)
 {
+	float limit = 20; 
+	float limitsq = limit * limit; 
 	for(int i = 0 ; i < mN ; i++)
 	{
+		glm::vec3 p1 = mPos[i];
 		mAcc[i] = mforce[i] / (double)mass[i];
-		
-		//acceleration magnitude
-		double amag = glm::length(mAcc[i])/double(mSimScale);
-		if(abs(amag) > 3.0)
-			mAcc[i] *= 0.5;
+		//float speed = glm::dot(mAcc[i], mAcc[i]);
+		//if(speed > limitsq)
+		//	mAcc[i] *= limitsq /sqrt(speed);
 
-		mVel[i] += mAcc[i] * double(dt);
+		mVel[i] += mAcc[i] * double(dt) ;
+		//speed = glm::dot(mVel[i], mVel[i]); 
+	//	if(speed > limitsq)
+	//		mVel[i] *= limitsq /sqrt(speed);
 		//glm::dvec3 vnext = mVelPrev[i] + double(dt) * mAcc[i];
 		//mVel[i] = 0.5 * ( mVelPrev[i] + vnext );
 		//mVelPrev[i] = vnext;
 		mPos[i] += glm::vec3(double(dt) * (mVel[i]) );
+		glm::vec3 p = mPos[i];
+		p = p * 1.f;
 	}
 }
 
 void ParticleSystem::computeRepulsion()
 {
+	glm::vec3 l = glm::vec3(50, 50, 0);
+	glm::vec3 r = glm::vec3(75, 50, 0);
+
+	glm::vec3 tr = glm::vec3(90, 90, 0);
+	glm::vec3 bl = glm::vec3(10, 10, 0);
+
 	for(int i = 0 ;  i < mN ; i++)
 	{
-			glm::vec3 dist = mPos[i] - glm::vec3(50.0, 50.0, 0);
-			float distsq = glm::length(dist) * glm::length(dist);
-			if(distsq < 0.1)
-				distsq = 0.1;
+			glm::vec3 dist = mPos[i] - l;
 			
-				float f = mass[i] * 100 / distsq;
+			float distsq = glm::length(dist) * glm::length(dist);
+			distsq = distsq;
+			if(distsq < 10000)
+				distsq = 10000;
+			if(distsq > 50000)
+				distsq = 50000;
+			
+				float f = mass[i] * 100000 / distsq;
+				if(glm::length(dist) == 0)
+				{
+					continue; //this simple check avoid divide by zero during normalization
+				}
 				glm::vec3 dir = -glm::normalize(dist);
 				mforce[i] += dir * f; 
 
 		
 	}
+
+	//for(int i = 0 ;  i < mN ; i++)
+	//{
+	//	glm::vec3 dist = mPos[i] - r;
+
+	//	float distsq = glm::length(dist) * glm::length(dist);
+	//	distsq = distsq  - 100;
+	//	if(distsq < 1000)
+	//		distsq = 1000;
+	//	if(distsq > 250000)
+	//		distsq = 250000;
+
+	//	float f = mass[i] * 10000 / distsq;
+	//	if(glm::length(dist) == 0)
+	//	{
+	//		continue; //this simple check avoid divide by zero during normalization
+	//	}
+	//	glm::vec3 dir = -glm::normalize(dist);
+	//	mforce[i] += dir * f; 
+	//}
+
+	//for(int i = 0 ;  i < mN ; i++)
+	//{
+	//	glm::vec3 dist = mPos[i] - tr;
+
+	//	float distsq = glm::length(dist) * glm::length(dist);
+	//	distsq = distsq  - 100;
+	//	if(distsq < 1000)
+	//		distsq = 1000;
+	//	if(distsq > 250000)
+	//		distsq = 250000;
+
+	//	float f = mass[i] * 10000 / distsq;
+	//	if(glm::length(dist) == 0)
+	//	{
+	//		continue; //this simple check avoid divide by zero during normalization
+	//	}
+	//	glm::vec3 dir = -glm::normalize(dist);
+	//	mforce[i] += dir * f; 
+	//}
+
+	//for(int i = 0 ;  i < mN ; i++)
+	//{
+	//	glm::vec3 dist = mPos[i] - bl;
+
+	//	float distsq = glm::length(dist) * glm::length(dist);
+	//	distsq = distsq  - 100;
+	//	if(distsq < 1000)
+	//		distsq = 1000;
+	//	if(distsq > 250000)
+	//		distsq = 250000;
+
+	//	float f = mass[i] * 10000 / distsq;
+	//	if(glm::length(dist) == 0)
+	//	{
+	//		continue; //this simple check avoid divide by zero during normalization
+	//	}
+	//	glm::vec3 dir = -glm::normalize(dist);
+	//	mforce[i] += dir * f; 
+	//}
 }
 
 void ParticleSystem::updateGrid()
@@ -242,7 +325,8 @@ void ParticleSystem::updateGrid()
 	for(int i = 0 ; i < mN ; i++)
 	{
 		glm::vec3 p = mPos[i];
-		mHashTable[computeHash(p)].push_back(i);
+		int hash = computeHash(p, i);
+		mHashTable[hash].push_back(i);
 	}
 }
 
@@ -251,7 +335,7 @@ void ParticleSystem::checkEdges(float dt)
 {
 	//Define collision restituition
 	double restituition = 0.8;
-	double h = mSupportRadius / mSimScale; 
+	double h = 0.0457/ 0.04; 
 
 	for(int i=0; i< mPos.size();i++)
 		{
@@ -276,10 +360,11 @@ void ParticleSystem::checkEdges(float dt)
 
 void ParticleSystem::computeDensityPressure()
 {
-	double h = mSupportRadius;
+	double h = mSupportRadius/mSimScale;
+	h = 0.1;
 	double h2 = h * h;
-	double restDensity = 10.0;
-	double gasStiffness = 3.0;
+	double restDensity = 200;
+	double gasStiffness = 0.5;
 
 	m_wPolyKernel = 315.f / (64.f * M_PI * pow(h, 9));
 
@@ -291,16 +376,21 @@ void ParticleSystem::computeDensityPressure()
 		{
 			if(i != neighbors[j])
 			{
-				glm::dvec3 ri = glm::dvec3(mPos[i]) * double(mSimScale);
-				glm::dvec3 rj = glm::dvec3(mPos[neighbors[j]]) * double(mSimScale);
-				double r = glm::length(ri-rj);
+				glm::dvec3 ri = glm::dvec3(mPos[i]);
+				glm::dvec3 rj = glm::dvec3(mPos[neighbors[j]]);
+				glm::dvec3 diff = ri - rj;
+				diff *= mSimScale;
+				double r = glm::length(diff);
 				double r2 = r * r;
-				if(h > r){
-					sum += (mass[neighbors[j]] * pow((h2 - r2), 3));
+				if(h2 > r2 && EPSILON <= r2){
+					double cube = (h2 - r2);
+					sum += (mass[neighbors[j]] * m_wPolyKernel* cube * cube * cube);
 				}
 			}
 		}
-		m_density[i] = sum * m_wPolyKernel;
+		m_density[i] = sum;
+		if(m_density[i] < (EPSILON*10))
+			m_density[i] = EPSILON*10;
 		m_pressure[i] = (m_density[i] - restDensity) * gasStiffness;
 	}
 
@@ -310,37 +400,52 @@ void ParticleSystem::computeDensityPressure()
 void ParticleSystem::computePressureForce()
 {
 	double h = mSupportRadius;
+	double h2 = h * h; 
+	double viscosity = 0.2;
+	glm::dvec3 g = glm::dvec3(0.0, -2.8, 0.0);		//gravity
 	m_wSpikyKernel = -45.f / (M_PI * pow(h, 6));
+	m_LaplaceKernel = 45.f / (M_PI * pow(h, 6));
+
 	for(int i = 0 ; i < mN; i++)
 	{
 		glm::dvec3 sumPressureForce = glm::dvec3(0.0,0.0,0.0);
+		glm::dvec3 sumViscousForce = glm::dvec3(0.0,0.0,0.0);
 		vector<int> neighbors = neighbours(mPos[i]);
 		for(int j = 0; j < neighbors.size(); j++)
 		{
 			if(i != neighbors[j] )
 			{
-				glm::dvec3 ri = glm::dvec3(mPos[i]) * double(mSimScale);
-				glm::dvec3 rj = glm::dvec3(mPos[neighbors[j]]) * double(mSimScale);
-				glm::dvec3 r = ri-rj;
-				double rmag = glm::length(r);
-				if(h > rmag){
-					sumPressureForce += -((m_pressure[i] + m_pressure[neighbors[j]]) / 2) * (1.0 / m_density[neighbors[j]]) * (r/rmag) * pow((h-rmag), 2);
+				glm::dvec3 ri = glm::dvec3(mPos[i]);
+				glm::dvec3 rj = glm::dvec3(mPos[neighbors[j]]);
+				glm::dvec3 diff = ri - rj;
+				diff *= mSimScale;
+				double r = glm::length(diff);
+				double sq = h - r; 
+				double r2 = r * r; 
+				if(h2 > r2 && EPSILON <= r2){
+					sumPressureForce += -((m_pressure[i] + m_pressure[neighbors[j]]) / 2) * (double(mass[j]) / m_density[neighbors[j]]) * (diff/r) * sq * sq;
+					sumViscousForce += (mVel[neighbors[j]] - mVel[i]) * (h - r);
 				}
 			}
 		}
 
-		mforce[i] += sumPressureForce * m_wSpikyKernel * double(mass[i]);
+		glm::dvec3 force = sumPressureForce * m_wSpikyKernel;
+		force += (m_LaplaceKernel * viscosity * mass[i] )/m_density[i] * sumViscousForce;
+		force +=(double)mass[i] * g;
+		//cout<<"force"<<i<<" : "<<force.x<<" "<<force.y<<" "<<force.z<<endl;
+		mforce[i] += force;
 	}
 }
 
 void ParticleSystem::computeViscousForce()
 {
 	double h = mSupportRadius;
-	m_LaplaceKernel = 45.f / (M_PI * pow(h, 6));
-	double viscosity = 0.2;
+	double h2 = h * h;
+	
+
 	for(int i = 0 ; i < mPos.size() ; i++)
 	{
-		glm::dvec3 sumViscousForce = glm::dvec3(0.0,0.0,0.0);
+		
 		vector<int> neighbors = neighbours(mPos[i]);
 		for(int j = 0; j < neighbors.size() ; j++)
 		{
@@ -348,15 +453,17 @@ void ParticleSystem::computeViscousForce()
 			{
 				glm::dvec3 ri = glm::dvec3(mPos[i]) * double(mSimScale);
 				glm::dvec3 rj = glm::dvec3(mPos[neighbors[j]]) * double(mSimScale);
-				glm::dvec3 r = ri-rj;
-				double rmag = glm::length(r);
-				if(h > rmag){
-					sumViscousForce += (mVel[neighbors[j]] - mVel[i]) * (h - rmag);
+				glm::dvec3 diff = ri - rj;
+				double r = glm::length(diff);;
+				double r2 = r * r; 
+				if(h2 >= r2 && EPSILON <= r2){
+					
 				}
 			}
 		}
+		//glm::dvec3 force = (m_LaplaceKernel * viscosity * mass[i] )/m_density[i] * sumViscousForce;
 
-		mforce[i] += (m_LaplaceKernel * viscosity * mass[i] )/m_density[i] * sumViscousForce;
+		//mforce[i] += force; 
 	}
 }
 

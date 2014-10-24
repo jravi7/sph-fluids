@@ -19,7 +19,7 @@ public:
 	~ParticleSystem(void);
 	void update(float dt, glm::dvec3 center, bool isPause);
 	void render(int pos_loc, int color_loc);
-	int computeHash(glm::vec3 p);
+	int computeHash(glm::vec3 p, int i);
 private:
 	void init();
 	void initbuffers();
@@ -65,6 +65,7 @@ private:
 	//SPH Params; 
 	float mSupportRadius;	//	0.00459
 	float mSimScale;		// 0.004
+	int iteration;
 
 };
 

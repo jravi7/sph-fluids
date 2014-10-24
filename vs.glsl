@@ -16,5 +16,5 @@ void main()
 	gl_Position = projection * vec4(position, 1.0f);
 	texcoord0 = texcoord; 
 	normal0 = (projection * vec4(normal, 0.0f)).xyz; 
-	color0 = vec4(color, 1.0);
+	//color0 = vec4(color, 1.0);
 }

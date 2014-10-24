@@ -3,8 +3,6 @@
 #include <GL/glew.h>
 #include <vector>
 #include <glm\glm.hpp>
-#include "image.h"
-
 class Grid
 {
 public:

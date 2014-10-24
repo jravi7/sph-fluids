@@ -10,18 +10,15 @@
 #include <glm/gtx/transform.hpp>
 #include <math.h>
 #include "Camera.h"
-#include "cube.h"
-#include "image.h"
-#include "mesh.h"
+#include "SPHSystem.h"
 #include "particlesystem.h"
-#include "springSystem.h"
-#include "grid.h"
 
 Shader shader_obj;
+SPHSystem* sph;
+ParticleSystem* ps;
 Camera cam;
 
-ParticleSystem* ps;
-Grid* grid;
+
 
 
 int gwidth = 1024;
@@ -90,9 +87,8 @@ void initOpengl()
 	initCamera();
 	getShaderVarLoc();
 	
-	grid = new Grid(glm::vec3(50,50,0),100, 100, 10);
-	ps = new ParticleSystem(glm::vec3(0,0,0), glm::vec3(100,100,0), 250);
-		
+	sph = new SPHSystem(100);
+	ps = new ParticleSystem(glm::vec3(-50, -50, 0), glm::vec3(50,50,0), 1000);
 }
 
 
@@ -142,16 +138,28 @@ void processKeyboard(float dt)
 }
 
 
-void idle()
+void enableFixedFunction(Camera cam)
 {
-	static int last_time = 0;
-	int time = glutGet(GLUT_ELAPSED_TIME);
-	int elapsed = time-last_time;
-	float dt= 0.03;// * elapsed;
-	last_time = time;
-	processKeyboard(dt);
-	ps->update(dt, glm::dvec3(50,50,0), keyStates['p']);
-} 
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(glm::value_ptr(cam.projection()));
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf(glm::value_ptr(cam.view()));
+}
+
+void disableFixedFunction()
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+void check()
+{
+	GLenum err = glGetError();
+	std::cout<<gluErrorString(err)<<std::endl;
+}
 
 void display()
 {
@@ -181,36 +189,39 @@ void display()
 	
 	//Enable the position location in the shader
 	glEnableVertexAttribArray(position_loc);
-	glEnableVertexAttribArray(color_loc);
-	glEnableVertexAttribArray(texcoord_loc);
+	//glEnableVertexAttribArray(color_loc);
 	
 	
-	/*glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers);
-	glVertexAttribPointer(position_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, texcoord);
-	glVertexAttribPointer(texcoord_loc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers);*/
-	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
-	//ps->render(position_loc, color_loc);
-	
-	
-	//ps->render(position_loc, color_loc);
 	glPointSize(5.0);
-	grid->render(position_loc, color_loc, normal_loc);
-	ps->render(position_loc, color_loc);
+
+	//enableFixedFunction(cam);
+	
+	sph->render(position_loc);
+	//ps->render(position_loc, color_loc);
+
+	//disableFixedFunction()
 
 	
 	
 	glUseProgram(0);
 
 	glDisableVertexAttribArray(position_loc);
-	glDisableVertexAttribArray(color_loc);
+	//glDisableVertexAttribArray(color_loc);
+	
 	glutPostRedisplay();
 	glutSwapBuffers();
 	glAccum(GL_ACCUM, 0.9f);
 }
+
+void idle()
+{
+	static int last_time = 0;
+	int time = glutGet(GLUT_ELAPSED_TIME);
+	int elapsed = time-last_time;
+	float dt= 0.03;// * elapsed;
+	last_time = time;
+	processKeyboard(dt);
+} 
 
 void reshape (int w, int h)
 {
