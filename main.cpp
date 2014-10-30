@@ -12,11 +12,13 @@
 #include "Camera.h"
 #include "SPHSystem.h"
 #include "particlesystem.h"
+#include "grid.h"
 
 Shader shader_obj;
 SPHSystem* sph;
 ParticleSystem* ps;
 Camera cam;
+Grid* grid;
 
 
 
@@ -73,8 +75,8 @@ void initCamera(){
 	cam.setFov(60.0f);
 	cam.setAspRatio(gwidth/gheight);
 	cam.setNearFar(0.1f, 5000.f);
-	cam.setPosition(glm::vec3(50, 50, 150));
-	cam.lookAt(glm::vec3(50, 50, 0.0));
+	cam.setPosition(glm::vec3(0, 0, 150));
+	cam.lookAt(glm::vec3(0, 0, 0.0));
 	cam.setVelocity(100);
 	glutWarpPointer(cam.mMouseX, cam.mMouseY);
 }
@@ -87,15 +89,21 @@ void initOpengl()
 	initCamera();
 	getShaderVarLoc();
 	
-	sph = new SPHSystem(100);
-	ps = new ParticleSystem(glm::vec3(-50, -50, 0), glm::vec3(50,50,0), 1000);
+	sph = new SPHSystem(2000);
+	sph->setBoundary(glm::vec3(0,0,0), glm::vec3(100, 100, 0));
+	sph->init();
+
+	grid = new Grid(glm::vec3(50,50,0), 100, 100, 10);
 }
 
 
 void processKeyboard(float dt)
 {
 
-
+	if(keyStates['u'] || keyStates['U'])
+	{
+		sph->update();
+	}
 	if(keyStates['a'] || keyStates['A'])
 	{
 		cam.offsetPosition(cam.velocity()*dt*-cam.right());
@@ -138,22 +146,6 @@ void processKeyboard(float dt)
 }
 
 
-void enableFixedFunction(Camera cam)
-{
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(glm::value_ptr(cam.projection()));
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(glm::value_ptr(cam.view()));
-}
-
-void disableFixedFunction()
-{
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
 
 void check()
 {
@@ -194,12 +186,10 @@ void display()
 	
 	glPointSize(5.0);
 
-	//enableFixedFunction(cam);
 	
-	sph->render(position_loc);
-	//ps->render(position_loc, color_loc);
+	sph->render(position_loc, cam);
+	grid->render(position_loc, color_loc, normal_loc);
 
-	//disableFixedFunction()
 
 	
 	

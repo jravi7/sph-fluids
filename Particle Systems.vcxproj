@@ -81,11 +81,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="particlesystem.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="Misc.cpp" />
     <ClCompile Include="SPHSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="grid.h" />
+    <ClInclude Include="Misc.h" />
     <ClInclude Include="particlesystem.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="SPHSystem.h" />

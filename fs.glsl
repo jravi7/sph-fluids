@@ -9,5 +9,5 @@ uniform sampler2D gtexture;
 
 void main()
 {			
-		outputColor = vec4(1,1,1,1);
+		outputColor = vec4(1,0,0,1);
 }
