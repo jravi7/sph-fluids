@@ -42,11 +42,14 @@ private:
 	void addToGrid(int hash, int index);
 	void addToStack(Particle* &head, int index);
 	void neighbours(glm::vec3 p, int* list, int &count);
-	
+	void clearAcceleration();
+	void computeDensity();
+
 	std::vector<glm::vec3> mP;
 	std::vector<glm::vec3> mV;
 	std::vector<glm::vec3> mA;
 	std::vector<glm::vec3> mVprev;
+	std::vector<glm::vec3> mForce;
 	std::vector<float>	   mPressure;
 	std::vector<float>	   mDensity;
 	int					   mN;
@@ -56,6 +59,7 @@ private:
 	float mSmoothingLength;
 	float mParticleMass;
 	float mRestDensity;
+	float mDeltaT;		//time step
 	
 
 	//Spatial Grid

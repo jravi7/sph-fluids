@@ -3,6 +3,7 @@
 
 SPHSystem::SPHSystem(int count){
 	mN = count;
+	mDeltaT = 0.004;
 	mMin = glm::vec3(0);
 	mMax = glm::vec3(0);
 }
@@ -36,10 +37,16 @@ void SPHSystem::initializePositions()
 		for(float j = center.x ; j < mMax.x ; j++)
 		{
 			if(count < mN){
-				glm::vec3 p = glm::vec3(j*cellSize, i*cellSize, 0);
-				glm::vec3 v = glm::vec3(rand1(-10,10), rand1(-10,10), 0);
+				glm::vec3 p		= glm::vec3(j*cellSize, i*cellSize, 0);
+				glm::vec3 v		= glm::vec3(rand1(-10,10), rand1(-10,10), 0);
+				glm::vec3 a		= glm::vec3(0,0,0);
+				glm::vec3 vprev = v - 0.5f * float(mDeltaT) * a; 
+				glm::vec3 force = glm::vec3(0);
 				mP.push_back(p);
 				mV.push_back(v);
+				mA.push_back(a);
+				mVprev.push_back(vprev);
+				mForce.push_back(force);
 			}
 			count++;
 		}
@@ -198,36 +205,94 @@ void SPHSystem::neighbours(glm::vec3 p, int neighbourList[], int &count)
 	}
 }
 
+void SPHSystem::clearAcceleration()
+{
+	for(int i = 0 ; i < mA.size() ; i++)
+	{
+		mA[i] = glm::vec3(0);
+	}
+}
+
+void SPHSystem::computeDensity()
+{
+
+}
+
 void SPHSystem::update(){
 	updateGrid();
+
+	clearAcceleration();
+
+	computeDensity();
+
 	checkBoundary();
+	
 	step();
 }
 
 void SPHSystem::checkBoundary()
 {
+	float wallStiff = 5000.0; 
+	float wallDamp = 0.9; 
+	float EPSILON = 0.00001;
+	float radius = 0.004;
+	float diff;
+	double adj;
+	glm::vec3 norm;
+	float padding = 5.f;
+
 	for(int i = 0 ; i < mP.size() ; i++)
 	{
-		if(mP[i].x < mMin.x || mP[i].x > mMax.x)
+		//X Walls left
+		norm = glm::vec3(1, 0, 0);
+		diff = 2*radius - (mP[i].x - (mMin.x+padding));
+		if(diff > EPSILON)
 		{
-			mV[i].x *= -1;
+			adj = wallStiff * diff - wallDamp* glm::dot(norm, mVprev[i]);
+			mA[i] += float(adj) * norm;
 		}
-		if(mP[i].y < mMin.y || mP[i].y > mMax.y)
+
+		//X Walls right
+		norm = glm::vec3(-1, 0, 0);
+		diff = 2*radius - ((mMax.x-padding) - mP[i].x);
+		if(diff > EPSILON)
 		{
-			mV[i].y *= -1;
+			adj = wallStiff * diff - wallDamp* glm::dot(norm, mVprev[i]);
+			mA[i] += float(adj) * norm;
+		}
+
+		//Y Walls Down
+		norm = glm::vec3(0, 1, 0);
+		diff = 2*radius - (mP[i].y - (mMin.y+padding));
+		if(diff > EPSILON)
+		{
+			adj = wallStiff * diff - wallDamp* glm::dot(norm, mVprev[i]);
+			mA[i] += float(adj) * norm;
+		}
+
+		//X Walls Up
+		norm = glm::vec3(0, -1, 0);
+		diff = 2*radius - ((mMax.y-padding) - mP[i].y);
+		if(diff > EPSILON)
+		{
+			adj = wallStiff * diff - wallDamp* glm::dot(norm, mVprev[i]);
+			mA[i] += float(adj) * norm;
 		}
 	}
 }
 
 void SPHSystem::step()
 {
-	float dt = 0.004;
+	float dt = 0.01;
 	for(int i = 0 ; i < mP.size() ; i++)
 	{
-		//std::cout<<"Neighbour of Particle:"<<i<<std::endl;
 		int list[5000];
 		int count;
 		neighbours(mP[i], list, count);
-		mP[i] += mV[i] * dt;
+		mA[i] += glm::vec3(0, -9.8, 0);
+		glm::vec3 vhalf =	mVprev[i] + dt * mA[i];
+		mP[i] += vhalf * dt;
+		mV[i] += ( vhalf + mVprev[i] ) * 0.5f;
+		mVprev[i] = vhalf;
 	}
 }
