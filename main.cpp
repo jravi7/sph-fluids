@@ -81,7 +81,6 @@ void initCamera(){
 	glutWarpPointer(cam.mMouseX, cam.mMouseY);
 }
 
-
 void initOpengl()
 {
 	glEnable(GL_DEPTH_TEST);
@@ -95,7 +94,6 @@ void initOpengl()
 
 	grid = new Grid(glm::vec3(50,50,0), 100, 100, 10);
 }
-
 
 void processKeyboard(float dt)
 {
@@ -144,8 +142,6 @@ void processKeyboard(float dt)
 	}
 
 }
-
-
 
 void check()
 {

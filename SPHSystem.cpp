@@ -1,9 +1,9 @@
 #include "SPHSystem.h"
 
+#define EPSILON 0.000001
 
 SPHSystem::SPHSystem(int count){
-	mN = count;
-	mDeltaT = 0.004;
+	mDeltaT = 0.01;
 	mMin = glm::vec3(0);
 	mMax = glm::vec3(0);
 }
@@ -30,13 +30,14 @@ void SPHSystem::setBoundary(glm::vec3 min, glm::vec3 max)
 void SPHSystem::initializePositions()
 {
 	float cellSize = 0.5f;
+	float smoothLength = 0.068;
 	int count = 0;
 	glm::vec3 center = (mMin+mMax)/2.f;
 	for(float i = center.y ; i < mMax.y ; i++)
 	{
 		for(float j = center.x ; j < mMax.x ; j++)
 		{
-			if(count < mN){
+			if(count < NUM_PARTICLES){
 				glm::vec3 p		= glm::vec3(j*cellSize, i*cellSize, 0);
 				glm::vec3 v		= glm::vec3(rand1(-10,10), rand1(-10,10), 0);
 				glm::vec3 a		= glm::vec3(0,0,0);
@@ -46,6 +47,8 @@ void SPHSystem::initializePositions()
 				mV.push_back(v);
 				mA.push_back(a);
 				mVprev.push_back(vprev);
+				mDensity.push_back(0);
+				mPressure.push_back(0);
 				mForce.push_back(force);
 			}
 			count++;
@@ -53,7 +56,7 @@ void SPHSystem::initializePositions()
 	}
 
 	sg = (HashTable*)malloc(sizeof(HashTable));
-	sg->size = 200;
+	sg->size = 2 * NUM_PARTICLES;
 	sg->first = (Particle**)malloc(200*sizeof(Particle));
 	for(int i = 0; i < sg->size; i++)
 	{
@@ -102,14 +105,12 @@ void SPHSystem::render(int pos_loc, Camera &cam)
 
 int SPHSystem::computeHash(glm::vec3 p)
 {
-	int gridDeltaX = mMax.x / 10;
-	int gridDeltaY = mMax.y / 10;
-	int x = p.x / 10;
-	int y = p.y / 10;
-	return ((y*10)+x);
-	//std::cout<<"x: "<<x<<std::endl;
-	//std::cout<<"y: "<<y<<std::endl;
-	//std::cout<<"Hash: "<<(y*10)+x<<std::endl;
+	float wCellSize = 0.00459 / 0.002;
+	int gridDeltaX = int(mMax.x / wCellSize);
+	int gridDeltaY = int(mMax.y / wCellSize);
+	int x = p.x / wCellSize;
+	int y = p.y / wCellSize;
+	return ((y*wCellSize)+x);
 }
 
 void SPHSystem::addToGrid(int hash, int index)
@@ -149,32 +150,13 @@ void SPHSystem::updateGrid(){
 	}
 	
 	//loop through each particle 
-	for(int i = 0 ; i < mN ; i++)
+	for(int i = 0 ; i < NUM_PARTICLES ; i++)
 	{
 		glm::vec3 p = mP[i];
 		int hash = computeHash(p);
 		addToGrid(hash, i);
 
 	}
-}
-
-void SPHSystem::addToStack(Particle* &head, int index)
-{
-	if(head != NULL)
-	{
-		//declare new element
-		Particle* newParticle = (Particle*)malloc(sizeof(Particle));
-		newParticle->n = index;
-		//set 
-		newParticle->next = head;
-		head=newParticle;
-	}
-	else{
-		head = (Particle*)malloc(sizeof(Particle));
-		head->n = index; 
-		head->next = NULL;
-	}
-	
 }
 
 void SPHSystem::neighbours(glm::vec3 p, int neighbourList[], int &count)
@@ -195,7 +177,6 @@ void SPHSystem::neighbours(glm::vec3 p, int neighbourList[], int &count)
 				Particle* list = sg->first[hash];
 				while(list != NULL)
 				{	
-					//addToStack(neighbourList, list->n);
 					neighbourList[count] = list->n;
 					list = list->next;
 					count++;
@@ -207,26 +188,17 @@ void SPHSystem::neighbours(glm::vec3 p, int neighbourList[], int &count)
 
 void SPHSystem::clearAcceleration()
 {
-	for(int i = 0 ; i < mA.size() ; i++)
+	for(int i=0 ; i < NUM_PARTICLES; i++)
 	{
-		mA[i] = glm::vec3(0);
+		mA[i] = glm::vec3(0.f);
 	}
-}
-
-void SPHSystem::computeDensity()
-{
 
 }
 
 void SPHSystem::update(){
 	updateGrid();
-
 	clearAcceleration();
-
-	computeDensity();
-
 	checkBoundary();
-	
 	step();
 }
 
@@ -234,7 +206,6 @@ void SPHSystem::checkBoundary()
 {
 	float wallStiff = 5000.0; 
 	float wallDamp = 0.9; 
-	float EPSILON = 0.00001;
 	float radius = 0.004;
 	float diff;
 	double adj;
@@ -270,7 +241,7 @@ void SPHSystem::checkBoundary()
 			mA[i] += float(adj) * norm;
 		}
 
-		//X Walls Up
+		//Y Walls Up
 		norm = glm::vec3(0, -1, 0);
 		diff = 2*radius - ((mMax.y-padding) - mP[i].y);
 		if(diff > EPSILON)
@@ -283,7 +254,7 @@ void SPHSystem::checkBoundary()
 
 void SPHSystem::step()
 {
-	float dt = 0.01;
+	float dt = mDeltaT;
 	for(int i = 0 ; i < mP.size() ; i++)
 	{
 		int list[5000];
