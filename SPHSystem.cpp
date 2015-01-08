@@ -3,7 +3,6 @@
 #define EPSILON 0.000001
 
 SPHSystem::SPHSystem(int count){
-	mDeltaT = 0.01;
 	mMin = glm::vec3(0);
 	mMax = glm::vec3(0);
 }
@@ -19,6 +18,14 @@ void SPHSystem::init()
 {
 	initBuffers();
 	initializePositions();
+	initSPHParams();
+}
+
+void SPHSystem::initSPHParams()
+{
+	mDeltaT = 0.02;
+	mParticleMass = 1.98 / NUM_PARTICLES;		//Fluid mass = 1.98kg 
+
 }
 
 void SPHSystem::setBoundary(glm::vec3 min, glm::vec3 max)
@@ -29,17 +36,18 @@ void SPHSystem::setBoundary(glm::vec3 min, glm::vec3 max)
 
 void SPHSystem::initializePositions()
 {
-	float cellSize = 0.5f;
-	float smoothLength = 0.068;
+	float spacing = (SMOOTH_LENGTH/SIM_SCALE);
+
+
 	int count = 0;
 	glm::vec3 center = (mMin+mMax)/2.f;
 	for(float i = center.y ; i < mMax.y ; i++)
 	{
-		for(float j = center.x ; j < mMax.x ; j++)
+		for(float j = center.x; j < mMax.x ; j++)
 		{
 			if(count < NUM_PARTICLES){
-				glm::vec3 p		= glm::vec3(j*cellSize, i*cellSize, 0);
-				glm::vec3 v		= glm::vec3(rand1(-10,10), rand1(-10,10), 0);
+				glm::vec3 p		= glm::vec3(i/spacing, j/spacing, 0);
+				glm::vec3 v		= glm::vec3(rand1(-5,5), rand1(-1,1), 0);
 				glm::vec3 a		= glm::vec3(0,0,0);
 				glm::vec3 vprev = v - 0.5f * float(mDeltaT) * a; 
 				glm::vec3 force = glm::vec3(0);
@@ -57,7 +65,7 @@ void SPHSystem::initializePositions()
 
 	sg = (HashTable*)malloc(sizeof(HashTable));
 	sg->size = 2 * NUM_PARTICLES;
-	sg->first = (Particle**)malloc(200*sizeof(Particle));
+	sg->first = (Particle**)malloc(NUM_PARTICLES*sizeof(Particle));
 	for(int i = 0; i < sg->size; i++)
 	{
 		sg->first[i] = NULL;
@@ -96,20 +104,21 @@ void SPHSystem::render(int pos_loc, Camera &cam)
 	glBufferData(GL_ARRAY_BUFFER, mP.size()*sizeof(glm::vec3), &mP[0], GL_STREAM_DRAW);
 	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
 	glDrawArrays(GL_POINTS, 0, mP.size());
-	
-	
-
 }
 
 int SPHSystem::computeHash(glm::vec3 p)
 {
-	float wCellSize = 0.00459 / 0.002;
-	int gridDeltaX = int(mMax.x / wCellSize);
-	int gridDeltaY = int(mMax.y / wCellSize);
+	float wCellSize = SMOOTH_LENGTH / SIM_SCALE;
 	int x = p.x / wCellSize;
 	int y = p.y / wCellSize;
+	int z = p.z / wCellSize;
+
+	//something wrong with this hashing function
+	//doesn't work!! 
+	//return (73856093 * x + 19349663 * y + 83492791 * z) % HASHTABLE_SIZE; 
+
+	//this works fine
 	return ((y*wCellSize)+x);
 }
 
@@ -143,7 +152,7 @@ void SPHSystem::updateGrid(){
 	}
 
 	//allocate new memory
-	sg->first = (Particle**)malloc(5000*sizeof(Particle));
+	sg->first = (Particle**)malloc(NUM_PARTICLES*sizeof(Particle));
 	for(int i = 0; i < sg->size; i++)
 	{
 		sg->first[i] = NULL;
@@ -195,9 +204,52 @@ void SPHSystem::clearAcceleration()
 
 }
 
+
+void SPHSystem::computeDensity()
+{
+	/*
+	Poly Kernel:
+		(315 / 64 * pi * h^9) * (h^2 - r^2) ^ 3
+	*/
+	double kernel = 1.56747 /  pow(SMOOTH_LENGTH, 9);
+	double h2 = SMOOTH_LENGTH * SMOOTH_LENGTH;
+
+	//for each particle
+	//find its neighbour
+
+	for(int i = 0; i < NUM_PARTICLES ; ++i)
+	{
+		int list[NUM_PARTICLES];
+		int count;
+		neighbours(mP[i], list, count);	
+
+		glm::dvec3 pi = (glm::dvec3)mP[i];
+		//scale down to fluid world
+		pi *= SIM_SCALE;
+		double sum = 0;
+		for(int j = 0 ; j < count ; ++j)
+		{
+			
+			glm::dvec3 pj = (glm::dvec3)mP[list[j]];
+			//scale down to fluid world
+			pj *= SIM_SCALE;
+			double r = glm::length(pj - pi);
+			double r2 = r*r;
+			if(h2 > r2 && EPSILON <= r2){
+				double cube = (h2 - r2);
+				sum += cube * cube * cube;
+			}
+		}
+		mDensity[i] = sum * kernel * mParticleMass;
+	}
+
+	
+}
+
 void SPHSystem::update(){
 	updateGrid();
 	clearAcceleration();
+	computeDensity();
 	checkBoundary();
 	step();
 }
@@ -257,9 +309,7 @@ void SPHSystem::step()
 	float dt = mDeltaT;
 	for(int i = 0 ; i < mP.size() ; i++)
 	{
-		int list[5000];
-		int count;
-		neighbours(mP[i], list, count);
+		
 		mA[i] += glm::vec3(0, -9.8, 0);
 		glm::vec3 vhalf =	mVprev[i] + dt * mA[i];
 		mP[i] += vhalf * dt;

@@ -13,6 +13,8 @@
 #define NUM_PARTICLES 600
 #define SIM_SCALE 0.04
 #define SMOOTH_LENGTH 0.068
+#define FLUID_MASS 1.98
+#define HASHTABLE_SIZE (NUM_PARTICLES * 2)
 
 struct Particle
 {
@@ -36,13 +38,15 @@ public:
 	void setBoundary(glm::vec3 min, glm::vec3 max);
 	void update();
 	void checkBoundary();
+	void computeDensity();
 	void step();
 
 private:
 	void initializePositions();
 	void initBuffers();
+	void initSPHParams();
 	void drawBoundary(Camera &cam);
-	int computeHash(glm::vec3 p);
+	int  computeHash(glm::vec3 p);
 	void updateGrid();
 	void addToGrid(int hash, int index);
 	void neighbours(glm::vec3 p, int* list, int &count);
@@ -66,7 +70,6 @@ private:
 
 	//Spatial Grid
 	HashTable* sg;
-	float	mCellSize;
 	
 
 	//Draw Boundary 
