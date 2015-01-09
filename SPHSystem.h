@@ -39,6 +39,7 @@ public:
 	void update();
 	void checkBoundary();
 	void computeDensity();
+	void computePressureForce();
 	void step();
 
 private:

@@ -246,10 +246,54 @@ void SPHSystem::computeDensity()
 	
 }
 
+void SPHSystem::computePressureForce()
+{
+	/*
+	spiky kernel:
+		15/(pi*h6) * (h-r)^3 
+	*/
+	double spikyKernel = 4.7746 * pow(SMOOTH_LENGTH, 6);
+	double h = SMOOTH_LENGTH;
+	double h2 = SMOOTH_LENGTH * SMOOTH_LENGTH;
+
+	for(int i = 0; i < NUM_PARTICLES ; ++i)
+	{
+		int list[NUM_PARTICLES];
+		int count;
+		neighbours(mP[i], list, count);
+
+		glm::dvec3 pi = (glm::dvec3)mP[i];
+		double pres_i = mPressure[i];
+		
+		//scale down to fluid world
+		pi *= SIM_SCALE;
+		glm::dvec3 sum = glm::dvec3(0);
+		for(int j = 0 ; j < count ; ++j)
+		{
+
+			glm::dvec3 pj = (glm::dvec3)mP[list[j]];
+			double pres_j = mPressure[list[j]];
+			double dens_j = mDensity[list[j]];
+			//scale down to fluid world
+			pj *= SIM_SCALE;
+			glm::dvec3 diff = pi - pj;
+			double r = glm::length(pj - pi);
+			double r2 = r*r;
+			if(h2 > r2 && EPSILON <= r2){
+				double cube = (h - r);
+				sum += diff/r *((pres_i+pres_j)/(2*dens_j)) * cube * cube * cube;
+			}
+		}
+		mForce[i] += (sum * (mParticleMass * spikyKernel * -1.0));
+	}
+}
+
+
 void SPHSystem::update(){
 	updateGrid();
 	clearAcceleration();
 	computeDensity();
+	computePressureForce();
 	checkBoundary();
 	step();
 }
