@@ -76,7 +76,7 @@ void initCamera(){
 	cam.setNearFar(0.1f, 5000.f);
 	cam.setPosition(glm::vec3(.64, .64, 1.5));
 	cam.lookAt(glm::vec3(.64, 0.64, 0.0));
-	cam.setVelocity(100);
+	cam.setVelocity(1);
 	glutWarpPointer(cam.mMouseX, cam.mMouseY);
 }
 
@@ -88,7 +88,6 @@ void initOpengl()
 	getShaderVarLoc();
 	
 	sph = new SPHSystem();
-	sph->setBoundary(glm::vec3(0,0,0), glm::vec3(128, 128, 0));
 	sph->init();
 
 	//grid = new Grid(glm::vec3(.64,.64,0), 1.28, 1.28, 0.04);
@@ -97,7 +96,7 @@ void initOpengl()
 void processKeyboard(float dt)
 {
 
-	if(keyStates['u'] || keyStates['U'])
+	//if(keyStates['u'] || keyStates['U'])
 	{
 		sph->update();
 	}

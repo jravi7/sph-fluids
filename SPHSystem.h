@@ -14,16 +14,15 @@
 #define SMOOTH_LENGTH 0.04
 #define CELL_SIZE SMOOTH_LENGTH
 #define GRID_SIZE (WORLD_SIZE/CELL_SIZE)
-#define NUM_PARTICLES 1000
+#define MAX_PARTICLES 256
 
 #define FLUID_MASS 1.98
-#define PARTICLE_MASS (FLUID_MASS/NUM_PARTICLES)
+#define PARTICLE_MASS (FLUID_MASS/MAX_PARTICLES)
 #define REST_DENSITY 1000
 #define GRAVITY -1.8
 #define VISCOSITY 6.5
 #define GAS_CONSTANT 1.0
 #define DELTA_T 0.003
-#define HASHTABLE_SIZE ( * 2)
 
 struct Particle
 {
@@ -43,8 +42,6 @@ public:
 	~SPHSystem(void);
 	void init();
 	void render(int pos_loc, Camera &cam);
-	void check();
-	void setBoundary(glm::vec3 min, glm::vec3 max);
 	void update();
 	void checkBoundary();
 	void computeDensity();
@@ -54,12 +51,13 @@ public:
 private:
 	void initializePositions();
 	void initBuffers();
-	void initSPHParams();
+	void initGrid();
 	void drawBoundary(Camera &cam);
 	int  computeHash(glm::vec3 p);
 	void updateGrid();
 	void addToGrid(int hash, int index);
 	void neighbours(glm::vec3 p, int* list, int &count);
+	void neighbourSearch();
 	void clearAcceleration();
 
 	std::vector<glm::vec3> mP;
@@ -89,6 +87,9 @@ private:
 
 	//buffers
 	GLuint m_vbo;
+
+	//total number of particles currently within world boundary
+	int  TOTAL_PARTICLES;
 
 };
 
