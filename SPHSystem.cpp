@@ -2,10 +2,7 @@
 
 #define EPSILON 0.000001
 
-SPHSystem::SPHSystem(int count){
-	mMin = glm::vec3(0);
-	mMax = glm::vec3(0);
-}
+SPHSystem::SPHSystem(){}
 SPHSystem::~SPHSystem(void){}
 
 void SPHSystem::check()
@@ -18,36 +15,25 @@ void SPHSystem::init()
 {
 	initBuffers();
 	initializePositions();
-	initSPHParams();
-}
-
-void SPHSystem::initSPHParams()
-{
-	mDeltaT = 0.02;
-	mParticleMass = 1.98 / NUM_PARTICLES;		//Fluid mass = 1.98kg 
-
 }
 
 void SPHSystem::setBoundary(glm::vec3 min, glm::vec3 max)
 {
 	mMin = min;
-	mMax = max;
+	mMax = glm::vec3(WORLD_SIZE, WORLD_SIZE, 0);
 }
 
 void SPHSystem::initializePositions()
 {
-	float spacing = (SMOOTH_LENGTH/SIM_SCALE);
-
-
 	int count = 0;
 	glm::vec3 center = (mMin+mMax)/2.f;
-	for(float i = center.y ; i < mMax.y ; i++)
+	for(float i = 0.04; i < mMax.y ; i+=SMOOTH_LENGTH)
 	{
-		for(float j = center.x; j < mMax.x ; j++)
+		for(float j = 0.04; j < mMax.x ; j+=SMOOTH_LENGTH)
 		{
 			if(count < NUM_PARTICLES){
-				glm::vec3 p		= glm::vec3(i/spacing, j/spacing, 0);
-				glm::vec3 v		= glm::vec3(rand1(-5,5), rand1(-1,1), 0);
+				glm::vec3 p		= glm::vec3(i, j, 0);
+				glm::vec3 v		= glm::vec3(rand1(-0.05,0.05), rand1(-.01,.01), 0);
 				glm::vec3 a		= glm::vec3(0,0,0);
 				glm::vec3 vprev = v - 0.5f * float(mDeltaT) * a; 
 				glm::vec3 force = glm::vec3(0);
@@ -55,7 +41,7 @@ void SPHSystem::initializePositions()
 				mV.push_back(v);
 				mA.push_back(a);
 				mVprev.push_back(vprev);
-				mDensity.push_back(0);
+				mDensity.push_back(REST_DENSITY);
 				mPressure.push_back(0);
 				mForce.push_back(force);
 			}
@@ -109,7 +95,7 @@ void SPHSystem::render(int pos_loc, Camera &cam)
 
 int SPHSystem::computeHash(glm::vec3 p)
 {
-	float wCellSize = SMOOTH_LENGTH / SIM_SCALE;
+	float wCellSize = CELL_SIZE;
 	int x = p.x / wCellSize;
 	int y = p.y / wCellSize;
 	int z = p.z / wCellSize;
@@ -200,6 +186,7 @@ void SPHSystem::clearAcceleration()
 	for(int i=0 ; i < NUM_PARTICLES; i++)
 	{
 		mA[i] = glm::vec3(0.f);
+		mForce[i] = glm::vec3(0.f);
 	}
 
 }
@@ -225,14 +212,14 @@ void SPHSystem::computeDensity()
 
 		glm::dvec3 pi = (glm::dvec3)mP[i];
 		//scale down to fluid world
-		pi *= SIM_SCALE;
+		//pi *= SIM_SCALE;
 		double sum = 0;
 		for(int j = 0 ; j < count ; ++j)
 		{
 			
 			glm::dvec3 pj = (glm::dvec3)mP[list[j]];
 			//scale down to fluid world
-			pj *= SIM_SCALE;
+			//pj *= SIM_SCALE;
 			double r = glm::length(pj - pi);
 			double r2 = r*r;
 			if(h2 > r2 && EPSILON <= r2){
@@ -240,7 +227,8 @@ void SPHSystem::computeDensity()
 				sum += cube * cube * cube;
 			}
 		}
-		mDensity[i] = sum * kernel * mParticleMass;
+		mDensity[i] += sum * kernel * mParticleMass;
+		mPressure[i] += GAS_CONSTANT * (mDensity[i]-REST_DENSITY);
 	}
 
 	
@@ -251,8 +239,11 @@ void SPHSystem::computePressureForce()
 	/*
 	spiky kernel:
 		15/(pi*h6) * (h-r)^3 
+	spiky kernel gradient:
+		45/(pi*h6) * (h-r)^2 
 	*/
-	double spikyKernel = 4.7746 * pow(SMOOTH_LENGTH, 6);
+	double spikyKernel = -14.33121 / pow(SMOOTH_LENGTH, 6);
+	double viscousKernel = 14.33121 / pow(SMOOTH_LENGTH, 6);
 	double h = SMOOTH_LENGTH;
 	double h2 = SMOOTH_LENGTH * SMOOTH_LENGTH;
 
@@ -263,28 +254,33 @@ void SPHSystem::computePressureForce()
 		neighbours(mP[i], list, count);
 
 		glm::dvec3 pi = (glm::dvec3)mP[i];
+		glm::dvec3 vi = (glm::dvec3)mV[i];
 		double pres_i = mPressure[i];
 		
 		//scale down to fluid world
-		pi *= SIM_SCALE;
-		glm::dvec3 sum = glm::dvec3(0);
+		//pi *= SIM_SCALE;
+		glm::dvec3 sumPressure = glm::dvec3(0);
+		glm::dvec3 sumViscous= glm::dvec3(0);
 		for(int j = 0 ; j < count ; ++j)
 		{
 
 			glm::dvec3 pj = (glm::dvec3)mP[list[j]];
+			glm::dvec3 vj = (glm::dvec3)mV[list[j]];
 			double pres_j = mPressure[list[j]];
 			double dens_j = mDensity[list[j]];
 			//scale down to fluid world
-			pj *= SIM_SCALE;
+			//pj *= SIM_SCALE;
 			glm::dvec3 diff = pi - pj;
 			double r = glm::length(pj - pi);
 			double r2 = r*r;
 			if(h2 > r2 && EPSILON <= r2){
-				double cube = (h - r);
-				sum += diff/r *((pres_i+pres_j)/(2*dens_j)) * cube * cube * cube;
+				double square = (h - r);
+				sumPressure += diff/r *((pres_i+pres_j)/(2*dens_j)) * square * square;
+				sumViscous += (vj - vi)/dens_j * (square);
 			}
 		}
-		mForce[i] += (sum * (mParticleMass * spikyKernel * -1.0));
+		mForce[i] += (sumPressure * (mParticleMass * spikyKernel * -1.0));
+		mForce[i] += (sumViscous * (VISCOSITY * mParticleMass * viscousKernel));
 	}
 }
 
@@ -353,8 +349,8 @@ void SPHSystem::step()
 	float dt = mDeltaT;
 	for(int i = 0 ; i < mP.size() ; i++)
 	{
-		
-		mA[i] += glm::vec3(0, -9.8, 0);
+		mA[i] += mForce[i] / mParticleMass;
+		mA[i] += glm::vec3(0, GRAVITY, 0);
 		glm::vec3 vhalf =	mVprev[i] + dt * mA[i];
 		mP[i] += vhalf * dt;
 		mV[i] += ( vhalf + mVprev[i] ) * 0.5f;

@@ -10,11 +10,20 @@
 #include <math.h>
 
 
-#define NUM_PARTICLES 600
-#define SIM_SCALE 0.04
-#define SMOOTH_LENGTH 0.068
+#define WORLD_SIZE 1.28
+#define SMOOTH_LENGTH 0.04
+#define CELL_SIZE SMOOTH_LENGTH
+#define GRID_SIZE (WORLD_SIZE/CELL_SIZE)
+#define NUM_PARTICLES 1000
+
 #define FLUID_MASS 1.98
-#define HASHTABLE_SIZE (NUM_PARTICLES * 2)
+#define PARTICLE_MASS (FLUID_MASS/NUM_PARTICLES)
+#define REST_DENSITY 1000
+#define GRAVITY -1.8
+#define VISCOSITY 6.5
+#define GAS_CONSTANT 1.0
+#define DELTA_T 0.003
+#define HASHTABLE_SIZE ( * 2)
 
 struct Particle
 {
@@ -30,7 +39,7 @@ struct HashTable{
 class SPHSystem
 {
 public:
-	SPHSystem(int count);
+	SPHSystem();
 	~SPHSystem(void);
 	void init();
 	void render(int pos_loc, Camera &cam);
