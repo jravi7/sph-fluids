@@ -33,11 +33,12 @@ void SPHSystem::initGrid()
 void SPHSystem::initializePositions()
 {
 	TOTAL_PARTICLES = 0;
-	for(float i = 0.04; i < mMax.y ; i+=SMOOTH_LENGTH)
+	float spacing = SMOOTH_LENGTH*0.7;
+	for(float i = spacing; i < mMax.y ; i+=spacing)
 	{
-		for(float j = 0.04; j < mMax.x ; j+=SMOOTH_LENGTH)
+		for(float j = spacing; j < mMax.x ; j+=spacing)
 		{
-			if(TOTAL_PARTICLES < 256){
+			if(TOTAL_PARTICLES < MAX_PARTICLES){
 				glm::vec3 p		= glm::vec3(j, i, 0);
 				glm::vec3 v		= glm::vec3(rand1(-0.05,0.05), rand1(-.01,.01), 0);
 				glm::vec3 a		= glm::vec3(0,0,0);
@@ -291,18 +292,21 @@ void SPHSystem::neighbourSearch()
 		int list[MAX_PARTICLES/2];
 		int count;
 		neighbours(mP[i], list, count);
-		std::cout<<"Neighbour of "<<i<<":";
+		/*std::cout<<"Neighbour of "<<i<<":";
 		for(int j = 0 ; j < count ; ++j)
 		{
 			std::cout<<j<<" ";
 		}
-		std::cout<<std::endl;
+		std::cout<<std::endl;*/
 	}
 }
 
 void SPHSystem::update(){
 	updateGrid();
-	neighbourSearch();
+	/* This function is only meant to check performance
+	Do not use it for actual simulation*/
+	neighbourSearch(); 
+	
 	//clearAcceleration();
 	//computeDensity();
 	//computePressureForce();
