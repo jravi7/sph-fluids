@@ -98,13 +98,20 @@ int SPHSystem::computeHash(glm::vec3 p)
 	int y = floor(p.y / CELL_SIZE);
 	int z = floor(p.z / CELL_SIZE);
 
-	//something wrong with this hashing function
-	//doesn't work!! 
-	//return (73856093 * x + 19349663 * y + 83492791 * z) % HASHTABLE_SIZE; 
+	
+	//This limits the coordinates withing the grid size along x or y
+	/*
+		for e.g. if x = 45
+		x = x & 31
+		x = 13 
+		how?
+		(45 - 31) - 1
+		(exceeded number - limit) - 1
+	*/
 	x = x & int(GRID_SIZE - 1);
 	y = y & int(GRID_SIZE - 1);
-	//this works fine
-	return (int((y*GRID_SIZE)+x) % sg->size) ;
+	
+	return (int((y*GRID_SIZE)+x)) ;
 }
 
 void SPHSystem::addToGrid(int hash, int index)
@@ -148,7 +155,6 @@ void SPHSystem::updateGrid(){
 	{
 		glm::vec3 p = mP[i];
 		int hash = computeHash(p);
-		//std::cout<<i<< ": "<<hash<<std::endl;
 		addToGrid(hash, i);
 
 	}
@@ -318,13 +324,13 @@ void SPHSystem::checkBoundary()
 {
 	float wallStiff = 5000.0; 
 	float wallDamp = 0.9; 
-	float radius = 0.004;
+	float radius = SMOOTH_LENGTH*0.6;
 	float diff;
 	double adj;
 	glm::vec3 norm;
-	float padding = 5.f;
+	float padding = SMOOTH_LENGTH*0.7;
 
-	for(int i = 0 ; i < mP.size() ; i++)
+	for(int i = 0 ; i < TOTAL_PARTICLES ; i++)
 	{
 		//X Walls left
 		norm = glm::vec3(1, 0, 0);
