@@ -12,11 +12,19 @@ void SPHSystem::init()
 	initBuffers();
 	initializePositions();
 	initGrid();
+	initKernels();
 }
 
 void SPHSystem::initBuffers()
 {
 	glGenBuffers(1, &m_vbo);
+}
+
+void SPHSystem::initKernels()
+{
+	mPolyKernel = 315/(64*M_PI*pow(SMOOTH_LENGTH,9.0));
+	mSpikyKernel = -45/(M_PI*pow(SMOOTH_LENGTH,6));
+	mViscousKernel = 45/(M_PI*pow(SMOOTH_LENGTH, 6));
 }
 
 void SPHSystem::initGrid()
@@ -42,7 +50,7 @@ void SPHSystem::initializePositions()
 				glm::vec3 p		= glm::vec3(j, i, 0);
 				glm::vec3 v		= glm::vec3(rand1(-0.05,0.05), rand1(-.01,.01), 0);
 				glm::vec3 a		= glm::vec3(0,0,0);
-				glm::vec3 vprev = v - 0.5f * float(mDeltaT) * a; 
+				glm::vec3 vprev = v - 0.5f * float(DELTA_T) * a; 
 				glm::vec3 force = glm::vec3(0);
 				mP.push_back(p);
 				mV.push_back(v);
@@ -204,7 +212,6 @@ void SPHSystem::computeDensity()
 	Poly Kernel:
 		(315 / 64 * pi * h^9) * (h^2 - r^2) ^ 3
 	*/
-	double kernel = 1.56747 /  pow(SMOOTH_LENGTH, 9);
 	double h2 = SMOOTH_LENGTH * SMOOTH_LENGTH;
 
 	//for each particle
@@ -212,18 +219,20 @@ void SPHSystem::computeDensity()
 
 	for(int i = 0; i < TOTAL_PARTICLES ; ++i)
 	{
-		int list[MAX_PARTICLES/2];
+		int list[MAX_PARTICLES];
 		int count;
 		neighbours(mP[i], list, count);	
 
-		glm::dvec3 pi = (glm::dvec3)mP[i];
+		glm::vec3 pi = mP[i];
 		//scale down to fluid world
 		//pi *= SIM_SCALE;
 		double sum = 0;
+		mDensity[i]=0;
+		mPressure[i]=0;
 		for(int j = 0 ; j < count ; ++j)
 		{
 			
-			glm::dvec3 pj = (glm::dvec3)mP[list[j]];
+			glm::vec3 pj = mP[list[j]];
 			//scale down to fluid world
 			//pj *= SIM_SCALE;
 			double r = glm::length(pj - pi);
@@ -233,7 +242,7 @@ void SPHSystem::computeDensity()
 				sum += cube * cube * cube;
 			}
 		}
-		mDensity[i] += sum * kernel * mParticleMass;
+		mDensity[i] += sum * mPolyKernel * PARTICLE_MASS;
 		mPressure[i] += GAS_CONSTANT * (mDensity[i]-REST_DENSITY);
 	}
 
@@ -242,51 +251,43 @@ void SPHSystem::computeDensity()
 
 void SPHSystem::computePressureForce()
 {
-	/*
-	spiky kernel:
-		15/(pi*h6) * (h-r)^3 
-	spiky kernel gradient:
-		45/(pi*h6) * (h-r)^2 
-	*/
-	double spikyKernel = -14.33121 / pow(SMOOTH_LENGTH, 6);
-	double viscousKernel = 14.33121 / pow(SMOOTH_LENGTH, 6);
 	double h = SMOOTH_LENGTH;
 	double h2 = SMOOTH_LENGTH * SMOOTH_LENGTH;
 
 	for(int i = 0; i < TOTAL_PARTICLES ; ++i)
 	{
-		int list[MAX_PARTICLES/2];
+		int list[MAX_PARTICLES];
 		int count;
 		neighbours(mP[i], list, count);
 
-		glm::dvec3 pi = (glm::dvec3)mP[i];
-		glm::dvec3 vi = (glm::dvec3)mV[i];
-		double pres_i = mPressure[i];
+		glm::vec3 pi = mP[i];
+		glm::vec3 vi = mV[i];
+		float pres_i = mPressure[i];
 		
 		//scale down to fluid world
 		//pi *= SIM_SCALE;
-		glm::dvec3 sumPressure = glm::dvec3(0);
-		glm::dvec3 sumViscous= glm::dvec3(0);
+		glm::vec3 sumPressure = glm::vec3(0);
+		glm::vec3 sumViscous= glm::vec3(0);
 		for(int j = 0 ; j < count ; ++j)
 		{
 
-			glm::dvec3 pj = (glm::dvec3)mP[list[j]];
-			glm::dvec3 vj = (glm::dvec3)mV[list[j]];
-			double pres_j = mPressure[list[j]];
-			double dens_j = mDensity[list[j]];
+			glm::vec3 pj = (glm::vec3)mP[list[j]];
+			glm::vec3 vj = (glm::vec3)mV[list[j]];
+			float pres_j = mPressure[list[j]];
+			float dens_j = mDensity[list[j]];
 			//scale down to fluid world
 			//pj *= SIM_SCALE;
-			glm::dvec3 diff = pi - pj;
-			double r = glm::length(pj - pi);
-			double r2 = r*r;
+			glm::vec3 diff = pi - pj;
+			float r = glm::length(pj - pi);
+			float r2 = r*r;
 			if(h2 > r2 && EPSILON <= r2){
-				double square = (h - r);
+				float square = (h - r);
 				sumPressure += diff/r *((pres_i+pres_j)/(2*dens_j)) * square * square;
 				sumViscous += (vj - vi)/dens_j * (square);
 			}
 		}
-		mForce[i] += (sumPressure * (mParticleMass * spikyKernel * -1.0));
-		mForce[i] += (sumViscous * (VISCOSITY * mParticleMass * viscousKernel));
+		mForce[i] += (sumPressure * (float(PARTICLE_MASS) * mSpikyKernel * -1.f));
+		mForce[i] += (sumViscous * (float(VISCOSITY * PARTICLE_MASS) * mViscousKernel));
 	}
 }
 
@@ -295,7 +296,7 @@ void SPHSystem::neighbourSearch()
 {
 	for(int i = 0; i < TOTAL_PARTICLES ; ++i)
 	{
-		int list[MAX_PARTICLES/2];
+		int list[MAX_PARTICLES];
 		int count;
 		neighbours(mP[i], list, count);
 		/*std::cout<<"Neighbour of "<<i<<":";
@@ -311,13 +312,13 @@ void SPHSystem::update(){
 	updateGrid();
 	/* This function is only meant to check performance
 	Do not use it for actual simulation*/
-	neighbourSearch(); 
+	//neighbourSearch(); 
 	
-	//clearAcceleration();
-	//computeDensity();
-	//computePressureForce();
-	//checkBoundary();
-	//step();
+	clearAcceleration();
+	computeDensity();
+	computePressureForce();
+	checkBoundary();
+	step();
 }
 
 void SPHSystem::checkBoundary()
@@ -372,10 +373,10 @@ void SPHSystem::checkBoundary()
 
 void SPHSystem::step()
 {
-	float dt = mDeltaT;
+	float dt = DELTA_T;
 	for(int i = 0 ; i < MAX_PARTICLES ; i++)
 	{
-		mA[i] += mForce[i] / mParticleMass;
+		mA[i] += mForce[i] /mDensity[i];
 		mA[i] += glm::vec3(0, GRAVITY, 0);
 		glm::vec3 vhalf =	mVprev[i] + dt * mA[i];
 		mP[i] += vhalf * dt;

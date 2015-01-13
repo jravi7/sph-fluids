@@ -14,7 +14,7 @@
 #define SMOOTH_LENGTH 0.04
 #define CELL_SIZE SMOOTH_LENGTH
 #define GRID_SIZE (WORLD_SIZE/CELL_SIZE)
-#define MAX_PARTICLES 256
+#define MAX_PARTICLES 512
 
 #define FLUID_MASS 1.98
 #define PARTICLE_MASS (FLUID_MASS/MAX_PARTICLES)
@@ -52,6 +52,7 @@ private:
 	void initializePositions();
 	void initBuffers();
 	void initGrid();
+	void initKernels();
 	void drawBoundary(Camera &cam);
 	int  computeHash(glm::vec3 p);
 	void updateGrid();
@@ -65,16 +66,15 @@ private:
 	std::vector<glm::vec3> mA;
 	std::vector<glm::vec3> mVprev;
 	std::vector<glm::vec3> mForce;
-	std::vector<double>	   mPressure;
-	std::vector<double>	   mDensity;
+	std::vector<float>	   mPressure;
+	std::vector<float>	   mDensity;
 
 
-	//SPH Params
-	float mSmoothingLength;
-	float mParticleMass;
-	float mRestDensity;
-	float mDeltaT;		//time step
 	
+	//kernels
+	float mPolyKernel;
+	float mSpikyKernel;
+	float mViscousKernel;
 
 	//Spatial Grid
 	HashTable* sg;
