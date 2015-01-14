@@ -154,9 +154,9 @@ void display()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-	glAccum(GL_RETURN, 0.95f);
+	//glAccum(GL_RETURN, 0.95f);
 
-	glClear(GL_ACCUM_BUFFER_BIT);
+	//glClear(GL_ACCUM_BUFFER_BIT);
 
 	//use shader program for subsequent calls
 	shader_obj.useProgram();
@@ -194,7 +194,7 @@ void display()
 	
 	glutPostRedisplay();
 	glutSwapBuffers();
-	glAccum(GL_ACCUM, 0.9f);
+	//glAccum(GL_ACCUM, 0.9f);
 }
 
 void idle()

@@ -41,14 +41,14 @@ void SPHSystem::initGrid()
 void SPHSystem::initializePositions()
 {
 	TOTAL_PARTICLES = 0;
-	float spacing = SMOOTH_LENGTH*0.7;
+	float spacing = SMOOTH_LENGTH*0.6;
 	for(float i = spacing; i < mMax.y ; i+=spacing)
 	{
 		for(float j = spacing; j < mMax.x ; j+=spacing)
 		{
 			if(TOTAL_PARTICLES < MAX_PARTICLES){
-				glm::vec3 p		= glm::vec3(j, i, 0);
-				glm::vec3 v		= glm::vec3(rand1(-0.05,0.05), rand1(-.01,.01), 0);
+				glm::vec3 p		= glm::vec3(i, j, 0);
+				glm::vec3 v		= glm::vec3(0, 0, 0);
 				glm::vec3 a		= glm::vec3(0,0,0);
 				glm::vec3 vprev = v - 0.5f * float(DELTA_T) * a; 
 				glm::vec3 force = glm::vec3(0);
@@ -243,7 +243,8 @@ void SPHSystem::computeDensity()
 			}
 		}
 		mDensity[i] += sum * mPolyKernel * PARTICLE_MASS;
-		mPressure[i] += GAS_CONSTANT * (mDensity[i]-REST_DENSITY);
+		mPressure[i] += GAS_CONSTANT * (pow(mDensity[i]/REST_DENSITY,7)-1);
+		//mPressure[i] += GAS_CONSTANT * (mDensity[i]-REST_DENSITY);
 	}
 
 	
@@ -323,8 +324,8 @@ void SPHSystem::update(){
 
 void SPHSystem::checkBoundary()
 {
-	float wallStiff = 5000.0; 
-	float wallDamp = 0.9; 
+	float wallStiff = 500.0; 
+	float wallDamp = 0.5; 
 	float radius = SMOOTH_LENGTH*0.6;
 	float diff;
 	double adj;
@@ -374,13 +375,14 @@ void SPHSystem::checkBoundary()
 void SPHSystem::step()
 {
 	float dt = DELTA_T;
-	for(int i = 0 ; i < MAX_PARTICLES ; i++)
+	for(int i = 0 ; i < TOTAL_PARTICLES ; i++)
 	{
 		mA[i] += mForce[i] /mDensity[i];
 		mA[i] += glm::vec3(0, GRAVITY, 0);
-		glm::vec3 vhalf =	mVprev[i] + dt * mA[i];
-		mP[i] += vhalf * dt;
-		mV[i] += ( vhalf + mVprev[i] ) * 0.5f;
-		mVprev[i] = vhalf;
+		mV[i] += mA[i] * dt;
+		//glm::vec3 vhalf =	mVprev[i] + dt * mA[i];
+		mP[i] += mV[i] * dt;
+		//mV[i] += ( vhalf + mVprev[i] ) * 0.5f;
+		//mVprev[i] = vhalf;
 	}
 }
