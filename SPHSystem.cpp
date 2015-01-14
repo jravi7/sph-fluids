@@ -243,8 +243,8 @@ void SPHSystem::computeDensity()
 			}
 		}
 		mDensity[i] += sum * mPolyKernel * PARTICLE_MASS;
-		mPressure[i] += GAS_CONSTANT * (pow(mDensity[i]/REST_DENSITY,7)-1);
-		//mPressure[i] += GAS_CONSTANT * (mDensity[i]-REST_DENSITY);
+		//mPressure[i] += GAS_CONSTANT * (pow(mDensity[i]/REST_DENSITY,7)-1);
+		mPressure[i] += GAS_CONSTANT * (mDensity[i]-REST_DENSITY);
 	}
 
 	
