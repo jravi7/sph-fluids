@@ -5,9 +5,9 @@ Stable version.
 
 Improvements coming soon...
 
-### Version 0.1 
+#### Version 0.1 
 
-###Video
+#### Video
 [YouTube]
 
 
